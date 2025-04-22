@@ -1,9 +1,8 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <raylib.h>
 #include <raymath.h>
 
 #include "utils.c"
+
 
 typedef struct 
 {
@@ -62,7 +61,7 @@ int process()
 
 
 	if (IsKeyPressed(KEY_BACKSPACE)) reset();
-	if (IsKeyPressed(KEY_ENTER)) return 1;
+	if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_ENTER)) return 1;
 	return 0;
 }
 
@@ -87,7 +86,7 @@ void* module_main(void* saved_state)
 	} 
 	else 
 	{
-		printf("[RELOAD] Recarga en Caliente\n");
+		printf("[RELOAD] Recarga en Caliente exitosa\n");
 	}
 
 	int recompile = 0;

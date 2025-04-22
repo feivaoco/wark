@@ -12,8 +12,8 @@ int main()
 	{
 		while(system("./build.sh wark") != 0)
 		{
-			fprintf(stderr, "Whoops! Failed to compile!\n");
-			fprintf(stderr, "Press return to try again.\n");
+			fprintf(stderr, "Error en Compilacion de libreria\n");
+			fprintf(stderr, "Presiona una tecla para reintentar.\n");
 			getchar();
 		}
 		
@@ -21,8 +21,8 @@ int main()
 		
 		if(module == NULL)
 		{
-			fprintf(stderr, "Failed to load library. (%s)\n", dlerror());
-			fprintf(stderr, "Press return to try again.\n");
+			fprintf(stderr, "Falla en Cargar la libreria. (%s)\n", dlerror());
+			fprintf(stderr, "Presiona una tecla para reintentar.\n");
 			getchar();
 			
 			// Jump back to the beginning of the loop to recompile.

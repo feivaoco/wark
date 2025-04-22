@@ -2,7 +2,7 @@
 
 [ "$1" = main ] && gcc \
     -o wark main.c \
-    -D LINUX_BUILD\
+    -D LINUX_BUILD \
     -O2 -Iinclude -Llib  -ldl -lraylib -lm \
     -g -fPIC -std=c2x \
     -Wall -Wpedantic -Werror -Wl,-z,origin,--no-undefined
