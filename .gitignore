@@ -1,0 +1,7 @@
+wark
+wark.exe
+wark_module.so
+wark_module.dll
+
+.swp*
+*.swp*
