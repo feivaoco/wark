@@ -77,7 +77,7 @@ int main()
 
         dlclose(module);
 #endif
-        printf("[RELOAD] Recargando en Caliente\n");
         if (state == NULL) return EXIT_SUCCESS;
+        printf("[RELOAD] Recargando en Caliente\n");
     }
 }
