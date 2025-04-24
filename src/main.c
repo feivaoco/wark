@@ -42,12 +42,11 @@ int main()
         if (module_main == NULL)
         {
             fprintf(stderr, "Falla en encontrar la funcion 'module_main'. (Error %lu)\n", GetLastError());
+            fprintf(stderr, "Presiona una tecla para reintentar.\n");
             FreeLibrary(module);
             getchar();
             continue;
         }
-        state = module_main(state);
-        FreeLibrary(module);
 #elif defined(_LINUX)
         void* module = dlopen("./wark_module.so", RTLD_NOW);
         if (module == NULL)
@@ -58,23 +57,27 @@ int main()
             continue;
         }
         typedef void* module_main_func(void* state);
-        union 
-        {
-            void* obj;
-            module_main_func* func;
-        } caster;
+        union { void* obj; module_main_func* func; } caster;
         caster.obj = dlsym(module, "module_main");
         module_main_func* module_main = caster.func;
         if (module_main == NULL)
         {
-            fprintf(stderr, "Falla en encontrar la funcion 'module_main'. (Error %lu)\n", GetLastError());
+            fprintf(stderr, "Falla en encontrar la funcion 'module_main'. (Error %s)\n", dlerror());
+            fprintf(stderr, "Presiona una tecla para reintentar.\n");
             dlclose(module);
             getchar();
             continue;
         }
+#endif
+
         state = module_main(state);
+
+#if defined(_WINDOWS)
+        FreeLibrary(module);
+#elif defined(_LINUX)
         dlclose(module);
 #endif
+
         if (state == NULL){ printf("[EXIT] Cerrando Programa exitosamente\n"); return EXIT_SUCCESS;}
         
         printf("[RELOAD] Recargando en Caliente\n");

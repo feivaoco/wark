@@ -90,6 +90,7 @@ int process()
 	CAMERA.target = PLAYER.position;
 	UpdateCamera(&CAMERA, CAMERA_PERSPECTIVE);
 
+	
 	if (IsKeyPressed(KEY_BACKSPACE)) reset();
 	if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_ENTER)) return 1;
 	return 0;
@@ -99,7 +100,7 @@ void draw()
 {
 	BeginDrawing();
 		ClearBackground(WHITE);	
-		BeginMode3D(CAMERA);
+		BeginMode3D(CAMERA);        
                 DrawCube(PLAYER.position, 1.0f, 1.0f, 1.0f, RED);
                 DrawCubeWires(PLAYER.position, 1.0f, 1.0f, 1.0f, MAROON);
                 DrawGrid(100, 2.0f);
