@@ -1,6 +1,3 @@
-#include <raylib.h>
-#include <raymath.h>
-
 #include "utils.c"
 
 
@@ -28,7 +25,6 @@ float dt;
 
 void setup()
 {
-
 	InitWindow(WIDTH,HEIGHT, "WaRk");
 	SetTargetFPS(60);
 	SetExitKey(0);
@@ -113,59 +109,37 @@ void draw()
 	EndDrawing();
 }
 
+void* wark_main(void* state)
+{
+	game_state = state;
+
+    if (game_state == NULL) {
+        game_state = calloc(1, sizeof(*game_state));
+        printf("[INIT] Inicializando Programa.\n");			
+        game_state->last_state = 0;
+        setup();
+    } 
+    else {
+        printf("[RELOAD] Recarga en Caliente exitosa\n");
+    }
+
+    int recompile = 0;
+
+    while (!WindowShouldClose())
+    {
+        recompile = process();
+        draw();
+        if (recompile) return game_state;
+    }
+
+    CloseWindow();
+    printf("[EXIT] ADIOS\n");
+    return NULL;
+}
+
 #if defined(_WINDOWS)
     #define DLL_EXPORT __declspec(dllexport)
-	extern DLL_EXPORT void* module_main(void* state)
-	{
-	    game_state = state;
-
-	    if (game_state == NULL) {
-	        game_state = calloc(1, sizeof(*game_state));
-	        printf("[INIT] Inicializando Programa.\n");			
-	        game_state->last_state = 0;
-	        setup();
-	    } 
-	    else {
-	        printf("[RELOAD] Recarga en Caliente exitosa\n");
-	    }
-
-	    int recompile = 0;
-
-	    while (!WindowShouldClose()) {
-	        recompile = process();
-	        draw();
-	        if (recompile) return game_state;
-	    }
-
-	    CloseWindow();
-	    return NULL;
-	}    
-
+	extern DLL_EXPORT void* module_main(void* state){return wark_main(state);}    
 #elif defined(_LINUX)
-	void* module_main(void* state)
-	{
-	    game_state = state;
-
-	    if (game_state == NULL) {
-	        game_state = calloc(1, sizeof(*game_state));
-	        printf("[INIT] Inicializando Programa.\n");			
-	        game_state->last_state = 0;
-	        setup();
-	    } 
-	    else {
-	        printf("[RELOAD] Recarga en Caliente exitosa\n");
-	    }
-
-	    int recompile = 0;
-
-	    while (!WindowShouldClose()) {
-	        recompile = process();
-	        draw();
-	        if (recompile) return game_state;
-	    }
-
-	    CloseWindow();
-	    return NULL;
-	}    
-    
+	void* module_main(void* state){return wark_main(state);}    
 #endif

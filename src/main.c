@@ -18,7 +18,7 @@ int main()
     while (true)
     {
 #if defined(_WINDOWS)
-        while (system(".\\build.bat wark") != 0)
+        while (system(".\\build.sh wark") != 0)
 #elif defined(_LINUX)
         while (system("./build.sh wark") != 0)
 #endif
@@ -37,9 +37,7 @@ int main()
             getchar();
             continue;
         }
-
         typedef void* (__cdecl *module_main_func)(void* state);
-
         module_main_func module_main = (module_main_func)GetProcAddress(module, "module_main");
         if (module_main == NULL)
         {
@@ -48,13 +46,10 @@ int main()
             getchar();
             continue;
         }
-
         state = module_main(state);
-
         FreeLibrary(module);
 #elif defined(_LINUX)
         void* module = dlopen("./wark_module.so", RTLD_NOW);
-
         if (module == NULL)
         {
             fprintf(stderr, "Falla en Cargar la libreria. (%s)\n", dlerror());
@@ -62,22 +57,26 @@ int main()
             getchar();
             continue;
         }
-
         typedef void* module_main_func(void* state);
-
-        union {
+        union 
+        {
             void* obj;
             module_main_func* func;
         } caster;
-
         caster.obj = dlsym(module, "module_main");
         module_main_func* module_main = caster.func;
-
+        if (module_main == NULL)
+        {
+            fprintf(stderr, "Falla en encontrar la funcion 'module_main'. (Error %lu)\n", GetLastError());
+            dlclose(module);
+            getchar();
+            continue;
+        }
         state = module_main(state);
-
         dlclose(module);
 #endif
-        if (state == NULL) return EXIT_SUCCESS;
+        if (state == NULL){ printf("[EXIT] Cerrando Programa exitosamente\n"); return EXIT_SUCCESS;}
+        
         printf("[RELOAD] Recargando en Caliente\n");
     }
 }
