@@ -10,7 +10,6 @@
 #endif
 
 
-
 int main()
 {
     void* state = NULL;
@@ -18,14 +17,15 @@ int main()
     while (true)
     {
 #if defined(_WINDOWS)
-        while (system(".\\build.sh wark") != 0)
+        if (system(".\\build.bat wark") != 0)
 #elif defined(_LINUX)
-        while (system("./build.sh wark") != 0)
+        if (system("./build.sh wark") != 0)
 #endif
         {
             fprintf(stderr, "Error en Compilacion de libreria\n");
             fprintf(stderr, "Presiona una tecla para reintentar.\n");
             getchar();
+            continue;
         }
 
 #if defined(_WINDOWS)

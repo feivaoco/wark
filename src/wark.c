@@ -23,18 +23,23 @@ static GameState* game_state = NULL;
 
 float dt;
 
-void setup()
+void setup_raywindow()
 {
 	InitWindow(WIDTH,HEIGHT, "WaRk");
 	SetTargetFPS(60);
 	SetExitKey(0);
+}
+
+void setup()
+{
+	setup_raywindow();
 	srand((unsigned long)time(NULL));
 
 
 	PLAYER.speed = 40.0f;
 	PLAYER.health = 10;
 	PLAYER.velocity = Vector3Zero();
-	PLAYER.position = (Vector3){0, 0, 0};
+	PLAYER.position = (Vector3){0, 1.0f, 0};
 	PLAYER.direction = Vector2Zero();
 
 	CAMERA = (Camera3D){ 0 };
@@ -101,7 +106,7 @@ void draw()
 	BeginDrawing();
 		ClearBackground(WHITE);	
 		BeginMode3D(CAMERA);        
-                DrawCube(PLAYER.position, 1.0f, 1.0f, 1.0f, RED);
+                DrawCube(PLAYER.position, 1.0f, 1.0f, 1.0f, BLUE);
                 DrawCubeWires(PLAYER.position, 1.0f, 1.0f, 1.0f, MAROON);
                 DrawGrid(100, 2.0f);
         EndMode3D();	
@@ -115,12 +120,14 @@ void* wark_main(void* state)
 	game_state = state;
 
     if (game_state == NULL) {
-        game_state = calloc(1, sizeof(*game_state));
         printf("[INIT] Inicializando Programa.\n");			
+        game_state = calloc(1, sizeof(*game_state));
         game_state->last_state = 0;
         setup();
     } 
     else {
+    	//( ￣ー￣)φ__
+    	setup_raywindow();
         printf("[RELOAD] Recarga en Caliente exitosa\n");
     }
 
@@ -130,7 +137,8 @@ void* wark_main(void* state)
     {
         recompile = process();
         draw();
-        if (recompile) return game_state;
+        if (recompile) 
+			{CloseWindow(); return game_state;}
     }
 
     CloseWindow();
