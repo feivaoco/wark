@@ -1,6 +1,5 @@
 #include "utils.c"
 
-
 typedef struct 
 {
 	float speed;
@@ -22,6 +21,8 @@ static GameState* game_state = NULL;
 #define CAMERA (game_state->camera)
 
 Model model_map_scene = {0};
+Model model_player = {0};
+BoundingBox bounding_box_mesh_floor = {0};
 
 float dt;
 
@@ -32,12 +33,35 @@ void setup_raywindow()
 	SetExitKey(0);
 }
 
+
+Model load_model(Model model, const char *file_path, const char *text_debug)
+{
+	if(IsModelValid(model))
+	{
+		printf("[INFO] Unload a %s\n", text_debug); 
+		for(int i = 1; i < model.materialCount; i++)
+			if(IsMaterialValid(model.materials[i]))
+			{
+				unsigned int j = 0;
+				while(IsTextureValid(model.materials[i].maps[j].texture))
+				{
+					if( model.materials[i].maps[j].texture.id >= 3) 
+						UnloadTexture(model.materials[i].maps[j].texture);
+					j += 1;
+				}
+			}
+		UnloadModel(model);
+	}
+	printf("[INFO] Load a %s\n", text_debug);
+	return LoadModel(file_path);
+}
+
+
 void load_assets()
 {
-	if (IsModelValid(model_map_scene)) { printf("[INFO] Unload a model_map_scene\n"); UnloadModel(model_map_scene);}
-
-	model_map_scene = LoadModel("assets/3dmodels/scene_0.glb");
-
+	model_map_scene = load_model(model_map_scene, "assets/3dmodels/scene_0.glb", "model_map_scene");
+	model_player = load_model(model_player, "assets/3dmodels/char_f.glb", "model_player");
+	bounding_box_mesh_floor = GetMeshBoundingBox(model_map_scene.meshes[0]);
 }
 
 void setup()
@@ -47,7 +71,7 @@ void setup()
 
 	load_assets();
 
-	PLAYER.speed = 40.0f;
+	PLAYER.speed = 10.0f;
 	PLAYER.health = 10;
 	PLAYER.velocity = Vector3Zero();
 	PLAYER.position = (Vector3){0, 1.0f, 0};
@@ -63,6 +87,7 @@ void setup()
 
 void reset()
 {
+	//PLAYER.speed = 10.0f;
 	PLAYER.position = (Vector3){0, 1.0f, 0};
     CAMERA.position = (Vector3){ 15, 10.0f, 15.0f };
 }
@@ -98,16 +123,21 @@ int process()
 	    moveDir = Vector3Zero();
 	}
 
-	PLAYER.velocity.x = float_move_toward(PLAYER.velocity.x, moveDir.x, dt * 2500);
-	PLAYER.velocity.z = float_move_toward(PLAYER.velocity.z, moveDir.z, dt * 2500);
-		
+	PLAYER.velocity.x = float_move_toward(PLAYER.velocity.x, moveDir.x, dt * 500);
+	PLAYER.velocity.z = float_move_toward(PLAYER.velocity.z, moveDir.z, dt * 500);
+	
+
+	Vector3 last_position = PLAYER.position;
 	PLAYER.position = Vector3Add(PLAYER.position, Vector3Scale(PLAYER.velocity, dt));
 
 	CAMERA.target = PLAYER.position;
 	UpdateCamera(&CAMERA, CAMERA_PERSPECTIVE);
 
+
+
+
 	if (IsKeyPressed(KEY_F2)) load_assets(); // Recarga los modelos 3d
-	if (IsKeyPressed(KEY_F12)) reset(); // Resetear valores
+	if (IsKeyPressed(KEY_F11)) reset(); // Resetear valores
 	if (IsKeyPressed(KEY_F1)) return 1; // Hotreload sin resetar valores
 	return 0;
 }
@@ -117,16 +147,17 @@ void draw()
 	BeginDrawing();
 		ClearBackground(WHITE);	
 		BeginMode3D(CAMERA);        
+				//MAP
                 DrawModel(model_map_scene, Vector3Zero(), 1.0f, WHITE);
-                //DrawMesh(model_map_scene.meshes[2], model_map_scene.materials[2], model_map_scene.transform);
-                DrawCube(PLAYER.position, 1.0f, 1.0f, 1.0f, BLUE);
-                DrawCubeWires(PLAYER.position, 1.0f, 1.0f, 1.0f, MAROON);
                 
+				//PLAYER
+				DrawModel(model_player, PLAYER.position, 1.0f, WHITE);            
+                DrawBoundingBox(bounding_box_mesh_floor, GREEN);
         EndMode3D();	
         DrawFPS(10, 10);
-        //DrawText(TextFormat("{ %.2f , %.2f , %.2f }", PLAYER.velocity.x, PLAYER.velocity.y, PLAYER.velocity.z), 30, 30, 42, BLACK);
-		//DrawText(TextFormat(" %d , %d ", model_map_scene.materialCount, model_map_scene.meshCount), 30,30,42,BLACK);
-	EndDrawing();
+        //DrawText(TextFormat(" %d , %d ", model_map_scene.materialCount, model_map_scene.meshCount), 30,30,42,BLACK);
+
+    EndDrawing();
 }
 
 void* wark_main(void* state)
