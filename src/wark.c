@@ -21,6 +21,8 @@ static GameState* game_state = NULL;
 #define PLAYER (game_state->player)
 #define CAMERA (game_state->camera)
 
+Model model_map_scene = {0};
+
 float dt;
 
 void setup_raywindow()
@@ -30,11 +32,20 @@ void setup_raywindow()
 	SetExitKey(0);
 }
 
+void load_assets()
+{
+	if (IsModelValid(model_map_scene)) { printf("[INFO] Unload a model_map_scene\n"); UnloadModel(model_map_scene);}
+
+	model_map_scene = LoadModel("assets/3dmodels/scene_0.glb");
+
+}
+
 void setup()
 {
 	setup_raywindow();
 	srand((unsigned long)time(NULL));
 
+	load_assets();
 
 	PLAYER.speed = 40.0f;
 	PLAYER.health = 10;
@@ -95,9 +106,9 @@ int process()
 	CAMERA.target = PLAYER.position;
 	UpdateCamera(&CAMERA, CAMERA_PERSPECTIVE);
 
-	
-	if (IsKeyPressed(KEY_BACKSPACE)) reset();
-	if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_ENTER)) return 1;
+	if (IsKeyPressed(KEY_F2)) load_assets(); // Recarga los modelos 3d
+	if (IsKeyPressed(KEY_F12)) reset(); // Resetear valores
+	if (IsKeyPressed(KEY_F1)) return 1; // Hotreload sin resetar valores
 	return 0;
 }
 
@@ -106,12 +117,15 @@ void draw()
 	BeginDrawing();
 		ClearBackground(WHITE);	
 		BeginMode3D(CAMERA);        
+                DrawModel(model_map_scene, Vector3Zero(), 1.0f, WHITE);
+                //DrawMesh(model_map_scene.meshes[2], model_map_scene.materials[2], model_map_scene.transform);
                 DrawCube(PLAYER.position, 1.0f, 1.0f, 1.0f, BLUE);
                 DrawCubeWires(PLAYER.position, 1.0f, 1.0f, 1.0f, MAROON);
-                DrawGrid(100, 2.0f);
+                
         EndMode3D();	
         DrawFPS(10, 10);
-        DrawText(TextFormat("{ %.2f , %.2f , %.2f }", PLAYER.velocity.x, PLAYER.velocity.y, PLAYER.velocity.z), 30, 30, 42, BLACK);
+        //DrawText(TextFormat("{ %.2f , %.2f , %.2f }", PLAYER.velocity.x, PLAYER.velocity.y, PLAYER.velocity.z), 30, 30, 42, BLACK);
+		//DrawText(TextFormat(" %d , %d ", model_map_scene.materialCount, model_map_scene.meshCount), 30,30,42,BLACK);
 	EndDrawing();
 }
 
@@ -128,6 +142,7 @@ void* wark_main(void* state)
     else {
     	//( ￣ー￣)φ__
     	setup_raywindow();
+		load_assets();
         printf("[RELOAD] Recarga en Caliente exitosa\n");
     }
 
