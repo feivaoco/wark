@@ -17,12 +17,17 @@ typedef struct
 } GameState;
 
 static GameState* game_state = NULL;
+
 #define PLAYER (game_state->player)
 #define CAMERA (game_state->camera)
 
 Model model_map_scene = {0};
 Model model_player = {0};
-BoundingBox bounding_box_mesh_floor = {0};
+
+Model model_collisions_scene_walls = {0};
+BoundingBoxSlice collisions_scene_walls = {0};
+Model model_collisions_scene_floors = {0};
+Triangle3DSlice collisions_scene_floors = {0};
 
 float dt;
 
@@ -34,35 +39,23 @@ void setup_raywindow()
 }
 
 
-Model load_model(Model model, const char *file_path, const char *text_debug)
-{
-	if(IsModelValid(model))
-	{
-		printf("[INFO] Unload a %s\n", text_debug); 
-		for(int i = 1; i < model.materialCount; i++)
-			if(IsMaterialValid(model.materials[i]))
-			{
-				unsigned int j = 0;
-				while(IsTextureValid(model.materials[i].maps[j].texture))
-				{
-					if( model.materials[i].maps[j].texture.id >= 3) 
-						UnloadTexture(model.materials[i].maps[j].texture);
-					j += 1;
-				}
-			}
-		UnloadModel(model);
-	}
-	printf("[INFO] Load a %s\n", text_debug);
-	return LoadModel(file_path);
-}
-
-
 void load_assets()
 {
-	model_map_scene = load_model(model_map_scene, "assets/3dmodels/scene_0.glb", "model_map_scene");
-	model_player = load_model(model_player, "assets/3dmodels/char_f.glb", "model_player");
-	bounding_box_mesh_floor = GetMeshBoundingBox(model_map_scene.meshes[0]);
+	load_model(&model_map_scene, "assets/3dmodels/scene_0.glb", "model_map_scene");
+	load_model(&model_player, "assets/3dmodels/char_f.glb", "model_player");
+	
+	load_scene_collisions(
+			&model_collisions_scene_walls, 
+			&collisions_scene_walls, 
+			"assets/3dmodels/collisions/scene_0_walls_collisions.glb",
+			"model_collisions_scene_walls",
+			&model_collisions_scene_floors, 
+			&collisions_scene_floors, 
+			"assets/3dmodels/collisions/scene_0_floors_collisions.glb",
+			"model_collisions_scene_floors"
+		);
 }
+
 
 void setup()
 {
@@ -74,11 +67,11 @@ void setup()
 	PLAYER.speed = 10.0f;
 	PLAYER.health = 10;
 	PLAYER.velocity = Vector3Zero();
-	PLAYER.position = (Vector3){0, 1.0f, 0};
+	PLAYER.position = (Vector3){0, 0.0f, 0};
 	PLAYER.direction = Vector2Zero();
 
 	CAMERA = (Camera3D){ 0 };
-    CAMERA.position = (Vector3){ 15, 10.0f, 15.0f };  // CAMERA position
+    CAMERA.position = (Vector3){ -15, 20.0f, 15.0f };  // CAMERA position
     CAMERA.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // CAMERA looking at point
     CAMERA.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // CAMERA up vector (rotation towards target)
     CAMERA.fovy = 45.0f;                                // CAMERA field-of-view Y
@@ -88,8 +81,8 @@ void setup()
 void reset()
 {
 	//PLAYER.speed = 10.0f;
-	PLAYER.position = (Vector3){0, 1.0f, 0};
-    CAMERA.position = (Vector3){ 15, 10.0f, 15.0f };
+	PLAYER.position = (Vector3){0, 0.0f, 0};
+    CAMERA.position = (Vector3){ -15, 20.0f, 15.0f };
 }
 
 int process()
@@ -123,18 +116,34 @@ int process()
 	    moveDir = Vector3Zero();
 	}
 
-	PLAYER.velocity.x = float_move_toward(PLAYER.velocity.x, moveDir.x, dt * 500);
-	PLAYER.velocity.z = float_move_toward(PLAYER.velocity.z, moveDir.z, dt * 500);
+	PLAYER.velocity.x = float_move_toward(PLAYER.velocity.x, moveDir.x, dt * 50);
+	PLAYER.velocity.z = float_move_toward(PLAYER.velocity.z, moveDir.z, dt * 50);
 	
 
 	Vector3 last_position = PLAYER.position;
 	PLAYER.position = Vector3Add(PLAYER.position, Vector3Scale(PLAYER.velocity, dt));
 
+	
+
+
+	// Sphere (Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z}, 0.3f
+	for(int i = 0; i < collisions_scene_walls.len; i++)
+		if
+		(
+			CheckCollisionBoxSphere(
+				collisions_scene_walls.items[i], 
+				(Vector3){PLAYER.position.x, PLAYER.position.y + .5, 
+				PLAYER.position.z}, 0.3f 
+			)
+		)
+		{
+			PLAYER.position = last_position;
+			break;
+		}
+	
+
 	CAMERA.target = PLAYER.position;
 	UpdateCamera(&CAMERA, CAMERA_PERSPECTIVE);
-
-
-
 
 	if (IsKeyPressed(KEY_F2)) load_assets(); // Recarga los modelos 3d
 	if (IsKeyPressed(KEY_F11)) reset(); // Resetear valores
@@ -148,11 +157,19 @@ void draw()
 		ClearBackground(WHITE);	
 		BeginMode3D(CAMERA);        
 				//MAP
+                
                 DrawModel(model_map_scene, Vector3Zero(), 1.0f, WHITE);
+                
+                for(int i = 0; i < collisions_scene_walls.len; i++){DrawBoundingBox(collisions_scene_walls.items[i], ORANGE);}
+                for(int i = 0; i < collisions_scene_floors.len; i++){ DrawTriangle3DLines(collisions_scene_floors.items[i], GREEN);}
+
+               
+
+                //DrawModel(model_collisions_scene_walls, Vector3Zero(), 1.0f, WHITE);
                 
 				//PLAYER
 				DrawModel(model_player, PLAYER.position, 1.0f, WHITE);            
-                DrawBoundingBox(bounding_box_mesh_floor, GREEN);
+                
         EndMode3D();	
         DrawFPS(10, 10);
         //DrawText(TextFormat(" %d , %d ", model_map_scene.materialCount, model_map_scene.meshCount), 30,30,42,BLACK);
