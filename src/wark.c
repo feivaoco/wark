@@ -4,6 +4,7 @@ typedef struct
 {
 	float speed;
 	int health;
+	float angle;
 	Vector2 direction;
 	Vector3 velocity;
 	Vector3 position;
@@ -32,7 +33,8 @@ Triangle3DSlice collisions_scene_floors = {0};
 float dt;
 
 void setup_raywindow()
-{
+{	
+	
 	InitWindow(WIDTH,HEIGHT, "WaRk");
 	SetTargetFPS(60);
 	SetExitKey(0);
@@ -59,6 +61,7 @@ void load_assets()
 
 void setup()
 {
+	
 	setup_raywindow();
 	srand((unsigned long)time(NULL));
 
@@ -69,20 +72,67 @@ void setup()
 	PLAYER.velocity = Vector3Zero();
 	PLAYER.position = (Vector3){0, 0.0f, 0};
 	PLAYER.direction = Vector2Zero();
+	PLAYER.angle = 0;
 
 	CAMERA = (Camera3D){ 0 };
     CAMERA.position = (Vector3){ -15, 20.0f, 15.0f };  // CAMERA position
     CAMERA.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // CAMERA looking at point
     CAMERA.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // CAMERA up vector (rotation towards target)
-    CAMERA.fovy = 45.0f;                                // CAMERA field-of-view Y
+    CAMERA.fovy = 20.0f;                                // CAMERA field-of-view Y
     CAMERA.projection = CAMERA_PERSPECTIVE;             // CAMERA mode type
 }
 
 void reset()
 {
 	//PLAYER.speed = 10.0f;
+	PLAYER.angle = 0; 
 	PLAYER.position = (Vector3){0, 0.0f, 0};
     CAMERA.position = (Vector3){ -15, 20.0f, 15.0f };
+}
+
+void process_collide_walls(float delta, Vector3 temp_position)
+{
+	// Sphere (Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z}, 0.3f
+	for(int i = 0; i < collisions_scene_walls.len; i++)
+		if
+		(
+			CheckCollisionBoxSphere(
+				collisions_scene_walls.items[i], 
+				(Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z}, 0.3f 
+			)
+		)
+		{
+			PLAYER.position = temp_position;
+			int collide_temp = 0;
+			Vector3 vel_temp = PLAYER.velocity;
+			
+			vel_temp.z = 0; 
+			temp_position = Vector3Add(PLAYER.position, Vector3Scale(vel_temp, dt));
+			for(int j = 0; j < collisions_scene_walls.len; j++)
+			{
+				collide_temp = CheckCollisionBoxSphere(
+									collisions_scene_walls.items[j], 
+									(Vector3){temp_position.x, temp_position.y + .5, temp_position.z}, 0.3f 
+								);
+				if(collide_temp) {break;}
+			}
+			if(!collide_temp) {PLAYER.position = temp_position; return;}
+
+			
+
+			vel_temp.z = PLAYER.velocity.z;
+			vel_temp.x = 0;
+			temp_position = Vector3Add(PLAYER.position, Vector3Scale(vel_temp, dt));
+			for(int j = 0; j < collisions_scene_walls.len; j++)
+			{
+				collide_temp = CheckCollisionBoxSphere(
+									collisions_scene_walls.items[j], 
+									(Vector3){temp_position.x, temp_position.y + .5, temp_position.z}, 0.3f 
+								);
+				if(collide_temp) {return;}
+			}
+			if(!collide_temp) {PLAYER.position = temp_position; return;}
+		}
 }
 
 int process()
@@ -112,6 +162,7 @@ int process()
 	
 	if (Vector3Length(moveDir) > 0.01f) {
 	    moveDir = Vector3Scale(Vector3Normalize(moveDir), PLAYER.speed);
+	    PLAYER.angle = float_move_toward_angle(PLAYER.angle, atan2f(moveDir.x, moveDir.z) * RAD2DEG, dt * 500);
 	} else {
 	    moveDir = Vector3Zero();
 	}
@@ -120,26 +171,9 @@ int process()
 	PLAYER.velocity.z = float_move_toward(PLAYER.velocity.z, moveDir.z, dt * 50);
 	
 
-	Vector3 last_position = PLAYER.position;
+	Vector3 temp_position = PLAYER.position;
 	PLAYER.position = Vector3Add(PLAYER.position, Vector3Scale(PLAYER.velocity, dt));
-
-	
-
-
-	// Sphere (Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z}, 0.3f
-	for(int i = 0; i < collisions_scene_walls.len; i++)
-		if
-		(
-			CheckCollisionBoxSphere(
-				collisions_scene_walls.items[i], 
-				(Vector3){PLAYER.position.x, PLAYER.position.y + .5, 
-				PLAYER.position.z}, 0.3f 
-			)
-		)
-		{
-			PLAYER.position = last_position;
-			break;
-		}
+	process_collide_walls(dt, temp_position);
 	
 
 	CAMERA.target = PLAYER.position;
@@ -168,7 +202,15 @@ void draw()
                 //DrawModel(model_collisions_scene_walls, Vector3Zero(), 1.0f, WHITE);
                 
 				//PLAYER
-				DrawModel(model_player, PLAYER.position, 1.0f, WHITE);            
+				//DrawModel(model_player, PLAYER.position, 1.0f, WHITE);
+				DrawModelEx(
+					model_player, 
+					PLAYER.position,
+					UP_AXIS,
+					PLAYER.angle,
+					V3ONE,
+					WHITE
+				);            
                 
         EndMode3D();	
         DrawFPS(10, 10);
@@ -201,7 +243,9 @@ void* wark_main(void* state)
         recompile = process();
         draw();
         if (recompile) 
-			{CloseWindow(); return game_state;}
+			{
+				CloseWindow(); return game_state;
+			}
     }
 
     CloseWindow();
