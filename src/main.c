@@ -80,6 +80,12 @@ int main()
 
         if (state == NULL){ printf("[EXIT] Cerrando Programa exitosamente\n"); return EXIT_SUCCESS;}
         
+        printf("===========================================\n");
+        printf("===========================================\n");
+        printf("===========================================\n");
+        printf("===========================================\n");
+        printf("===========================================\n");
         printf("[RELOAD] Recargando en Caliente\n");
+        
     }
 }

@@ -107,6 +107,7 @@ int int_move_toward(int in, int to, float delta){ if (abs(to - in) <= delta) ret
 void load_model(Model *model, const char *file_path, const char *text_debug)
 {
 	Model local_model = *model;
+	printf("[INFO] Revisando para hacer unload a %s\n", text_debug);
 	if(IsModelValid(local_model))
 	{
 		printf("[INFO] Unload a %s\n", text_debug); 
