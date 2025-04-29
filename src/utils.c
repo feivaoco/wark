@@ -9,8 +9,9 @@
 #include <raymath.h>
 
 #define UP_AXIS (Vector3){0,1,0}
+#define DOWN_AXIS (Vector3){0,-1,0}
 #define V3ONE (Vector3){1,1,1}
-
+#define V3ZERO (Vector3){0,0,0}
 
 typedef struct 
 {
@@ -131,11 +132,11 @@ void load_model(Model *model, const char *file_path, const char *text_debug)
 
 void load_scene_collisions
 (
-	Model *walls_model, BoundingBoxSlice *walls_collsions , const char *file_path_walls, const char *text_walls,
+	Model *walls_model, BoundingBoxSlice *walls_collisions , const char *file_path_walls, const char *text_walls,
 	Model *floors_model, Triangle3DSlice *floors_collisions , const char *file_path_floors, const char *text_floors
 )
 {
-	free_BoundingBoxSlice(walls_collsions);
+	free_BoundingBoxSlice(walls_collisions);
 	load_model(
 			walls_model, 
 			file_path_walls, 
@@ -144,7 +145,7 @@ void load_scene_collisions
 	for (int i = 0; i < walls_model->meshCount; i++)
 	{
 		append_BoundingBoxSlice(
-			walls_collsions,
+			walls_collisions,
 			GetMeshBoundingBox(walls_model->meshes[i])
 		);
 	}

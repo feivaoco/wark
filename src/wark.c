@@ -6,9 +6,9 @@ typedef struct
 	int health;
 	float angle;
 	Vector2 direction;
+	Vector3 last_move_direction;
 	Vector3 velocity;
 	Vector3 position;
-
 	unsigned char state;
 } Player;
 
@@ -90,8 +90,11 @@ void reset()
 {
 	//PLAYER.speed = 10.0f;
 	//PLAYER.angle = 0; 
-	PLAYER.position = (Vector3){2, 2, 11};
+	PLAYER.position = (Vector3){1.5, 7, 16};
+    PLAYER.velocity = V3ZERO;
     CAMERA.position = (Vector3){ -15, 20.0f, 15.0f };
+    
+    player_enter_state(PLAYER_IDLE_STATE);
 }
 
 
@@ -119,9 +122,9 @@ void draw()
 		BeginMode3D(CAMERA);        
 				//MAP
                 
-                DrawModel(model_map_scene, Vector3Zero(), 1.0f, WHITE);
+                //DrawModel(model_map_scene, Vector3Zero(), 1.0f, WHITE);
                 
-                for(int i = 0; i < collisions_scene_walls.len; i++){DrawBoundingBox(collisions_scene_walls.items[i], ORANGE);}
+              	for(int i = 0; i < collisions_scene_walls.len; i++){DrawBoundingBox(collisions_scene_walls.items[i], ORANGE);}
                 for(int i = 0; i < collisions_scene_floors.len; i++){ DrawTriangle3DLines(collisions_scene_floors.items[i], GREEN);}
 
                
@@ -137,12 +140,15 @@ void draw()
 					PLAYER.angle,
 					V3ONE,
 					WHITE
-				);            
+				);
+				DrawRay((Ray){PLAYER.position, DOWN_AXIS}, GREEN);            
                 
         EndMode3D();	
         DrawFPS(10, 10);
         //DrawText(TextFormat(" %d , %d ", model_map_scene.materialCount, model_map_scene.meshCount), 30,30,42,BLACK);
 		DrawText(TextFormat(" %f , %f , %f", PLAYER.position.x, PLAYER.position.y, PLAYER.position.z ), 30,30,42,BLACK);
+		DrawText(TextFormat(" %s ", get_current_player_state() ), 30,70,42,BLACK);
+
 
     EndDrawing();
 }
