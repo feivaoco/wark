@@ -35,11 +35,11 @@ unsigned char process_player_is_on_floor(Vector3 position)
 {
 	RayCollision t_rc = {0};
 	
-	for(int i = 0; i < collisions_scene_walls.len; i++)
+	for(int i = 0; i < model_collisions_scene_walls.meshCount; i++)
 	{
-		t_rc = GetRayCollisionBox(
+		t_rc = GetRayCollisionMesh(
 								(Ray){position, DOWN_AXIS},
-								collisions_scene_walls.items[i]
+								model_collisions_scene_walls.meshes[i], MATRIXZERO
 							);
 		if(t_rc.hit)
 		{
@@ -59,54 +59,60 @@ unsigned char process_player_is_on_floor(Vector3 position)
 
 void process_player_collide_walls(float delta, Vector3 temp_position)
 {
-	// Sphere (Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z}, 0.3f
+	BoundingBox bb = GetModelBoundingBox(model_player);
+	bb.min = Vector3Scale(bb.min, PLAYER.position);
+	bb.max = Vector3Scale(bb.max, PLAYER.position);
+
 	for(int i = 0; i < collisions_scene_walls.len; i++)
+	{
+		
 		if
-		(
-			CheckCollisionBoxSphere(
-				collisions_scene_walls.items[i], 
-				(Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z}, 0.3f 
+			(
+				CheckCollisionBoxes(
+					collisions_scene_walls.items[i], 
+					bb
+				)
 			)
-		)
-		{
-			if (PLAYER.state == PLAYER_FALL_STATE)
-				if (PLAYER.direction.x == 0 && PLAYER.direction.x == 0)
+			{
+				if (PLAYER.state == PLAYER_FALL_STATE)
+					if (PLAYER.direction.x == 0 && PLAYER.direction.x == 0)
+					{
+						PLAYER.position = Vector3Add(PLAYER.position, Vector3Scale(PLAYER.last_move_direction, delta));
+						return;
+					}
+	
+				PLAYER.position = temp_position;
+				int collide_temp = 0;
+				Vector3 vel_temp = PLAYER.velocity;
+				
+				vel_temp.z = 0; 
+				temp_position = Vector3Add(PLAYER.position, Vector3Scale(vel_temp, delta));
+				for(int j = 0; j < collisions_scene_walls.len; j++)
 				{
-					PLAYER.position = Vector3Add(PLAYER.position, Vector3Scale(PLAYER.last_move_direction, delta));
-					return;
+					collide_temp = CheckCollisionBoxes(
+										collisions_scene_walls.items[i], 
+										Vector3Scale(GetModelBoundingBox(model_player), PLAYER.position), 
+									)
+					if(collide_temp) {break;}
 				}
-
-			PLAYER.position = temp_position;
-			int collide_temp = 0;
-			Vector3 vel_temp = PLAYER.velocity;
-			
-			vel_temp.z = 0; 
-			temp_position = Vector3Add(PLAYER.position, Vector3Scale(vel_temp, delta));
-			for(int j = 0; j < collisions_scene_walls.len; j++)
-			{
-				collide_temp = CheckCollisionBoxSphere(
-									collisions_scene_walls.items[j], 
-									(Vector3){temp_position.x, temp_position.y + .5, temp_position.z}, 0.3f 
-								);
-				if(collide_temp) {break;}
+				if(!collide_temp) {PLAYER.position = temp_position; return;}
+	
+				
+	
+				vel_temp.z = PLAYER.velocity.z;
+				vel_temp.x = 0;
+				temp_position = Vector3Add(PLAYER.position, Vector3Scale(vel_temp, delta));
+				for(int j = 0; j < collisions_scene_walls.len; j++)
+				{
+					collide_temp = CheckCollisionBoxes(
+										collisions_scene_walls.items[i], 
+										Vector3Scale(GetModelBoundingBox(model_player), PLAYER.position), 
+									)
+					if(collide_temp) {return;}
+				}
+				if(!collide_temp) {PLAYER.position = temp_position; return;}
 			}
-			if(!collide_temp) {PLAYER.position = temp_position; return;}
-
-			
-
-			vel_temp.z = PLAYER.velocity.z;
-			vel_temp.x = 0;
-			temp_position = Vector3Add(PLAYER.position, Vector3Scale(vel_temp, delta));
-			for(int j = 0; j < collisions_scene_walls.len; j++)
-			{
-				collide_temp = 	CheckCollisionBoxSphere(
-									collisions_scene_walls.items[j], 
-									(Vector3){temp_position.x, temp_position.y + .5, temp_position.z}, 0.3f 
-								);
-				if(collide_temp) {return;}
-			}
-			if(!collide_temp) {PLAYER.position = temp_position; return;}
-		}
+	}
 }
 
 void player_enter_state(PlayerStates new_state)
@@ -246,7 +252,7 @@ void process_player_fall_state(float delta)
 		PLAYER.position.y = PLAYER.position.y + .01;
 		PLAYER.velocity.y = 0;
 		player_enter_state(PLAYER_IDLE_STATE);
-		return;
+		
 	}
 	////////////////////////////////////////////////
 	

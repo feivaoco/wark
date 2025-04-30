@@ -12,6 +12,8 @@
 #define DOWN_AXIS (Vector3){0,-1,0}
 #define V3ONE (Vector3){1,1,1}
 #define V3ZERO (Vector3){0,0,0}
+#define V4ZERO (Vector4){0,0,0,0}
+#define MATRIXZERO (Matrix){0,0,0,1, 0,0,0,1, 0,0,0,1, 0,0,0,1}
 
 typedef struct 
 {
