@@ -52,18 +52,14 @@ void load_assets()
     printf("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-\n");
     printf("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-\n");
     printf("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-\n");
-	load_model(&model_map_scene, "assets/3dmodels/scene_0.glb", "model_map_scene");
+	load_model(&model_map_scene, "assets/3dmodels/scene_0/scene_0.glb", "model_map_scene");
 	load_model(&model_player, "assets/3dmodels/char_f.glb", "model_player");
 	
 	load_scene_collisions(
 		&model_collisions_scene_walls, 
 		&collisions_scene_walls, 
-		"assets/3dmodels/collisions/scene_0_walls_collisions.glb",
-		"model_collisions_scene_walls",
-		&model_collisions_scene_floors, 
-		&collisions_scene_floors, 
-		"assets/3dmodels/collisions/scene_0_floors_collisions.glb",
-		"model_collisions_scene_floors"
+		"assets/3dmodels/scene_0/scene_0_collisions.glb",
+		"model_collisions_scene_0_collisions"
 	);
 }
 
@@ -125,8 +121,6 @@ void draw()
                 //DrawModel(model_map_scene, Vector3Zero(), 1.0f, WHITE);
                 
               	for(int i = 0; i < collisions_scene_walls.len; i++){DrawBoundingBox(collisions_scene_walls.items[i], ORANGE);}
-                for(int i = 0; i < collisions_scene_floors.len; i++){ DrawTriangle3DLines(collisions_scene_floors.items[i], GREEN);}
-
                
 
                 //DrawModel(model_collisions_scene_walls, Vector3Zero(), 1.0f, WHITE);

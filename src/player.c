@@ -35,19 +35,16 @@ unsigned char process_player_is_on_floor(Vector3 position)
 {
 	RayCollision t_rc = {0};
 	
-	for(int i = 0; i < collisions_scene_floors.len; i++)
+	for(int i = 0; i < collisions_scene_walls.len; i++)
 	{
-		t_rc = GetRayCollisionTriangle(
+		t_rc = GetRayCollisionBox(
 								(Ray){position, DOWN_AXIS},
-								collisions_scene_floors.items[i].points[0],
-								collisions_scene_floors.items[i].points[1],
-								collisions_scene_floors.items[i].points[2]
+								collisions_scene_walls.items[i]
 							);
 		if(t_rc.hit)
 		{
 			if(t_rc.distance <= .2)
 			{
-				
 				return 1;
 			}
 			else if(t_rc.distance > .5)
@@ -114,7 +111,7 @@ void process_player_collide_walls(float delta, Vector3 temp_position)
 
 void player_enter_state(PlayerStates new_state)
 {
-	PlayerStates last_state = PLAYER.state;
+	//PlayerStates last_state = PLAYER.state;
 	PLAYER.state = new_state;
 
 	switch(new_state)
@@ -173,6 +170,7 @@ void process_player_walk_state(float delta)
 	if (Vector3Length(moveDir) > 0.01f) {
 	    moveDir = Vector3Scale(Vector3Normalize(moveDir), PLAYER.speed);
 	    PLAYER.angle = float_move_toward_angle(PLAYER.angle, atan2f(moveDir.x, moveDir.z) * RAD2DEG, delta * 1000);
+		PLAYER.last_move_direction = moveDir;
 	} else {
 	    moveDir = V3ZERO;
 	    {player_enter_state(PLAYER_IDLE_STATE); return;}

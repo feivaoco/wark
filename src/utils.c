@@ -132,8 +132,7 @@ void load_model(Model *model, const char *file_path, const char *text_debug)
 
 void load_scene_collisions
 (
-	Model *walls_model, BoundingBoxSlice *walls_collisions , const char *file_path_walls, const char *text_walls,
-	Model *floors_model, Triangle3DSlice *floors_collisions , const char *file_path_floors, const char *text_floors
+	Model *walls_model, BoundingBoxSlice *walls_collisions , const char *file_path_walls, const char *text_walls
 )
 {
 	free_BoundingBoxSlice(walls_collisions);
@@ -147,28 +146,6 @@ void load_scene_collisions
 		append_BoundingBoxSlice(
 			walls_collisions,
 			GetMeshBoundingBox(walls_model->meshes[i])
-		);
-	}
-
-	free_Triangle3DSlice(floors_collisions);
-	load_model(
-			floors_model, 
-			file_path_floors, 
-			text_floors
-		);
-	for (int i = 0; i < floors_model->meshCount; i++)
-	{
-		if(floors_model->meshes[i].vertexCount > 3) {printf("[ERROR] Un Mesh de Floor tiene mas de 3 vertices\n"); return;}
-		
-
-		append_Triangle3DSlice(
-			floors_collisions,
-			(Triangle3D)
-			{
-				(Vector3){floors_model->meshes[i].vertices[0], floors_model->meshes[i].vertices[1], floors_model->meshes[i].vertices[2]},
-				(Vector3){floors_model->meshes[i].vertices[3], floors_model->meshes[i].vertices[4], floors_model->meshes[i].vertices[5]},
-				(Vector3){floors_model->meshes[i].vertices[6], floors_model->meshes[i].vertices[7], floors_model->meshes[i].vertices[8]},
-			}
 		);
 	}
 }
