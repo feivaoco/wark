@@ -33,11 +33,11 @@ void setup_player()
 }
 
 
-void player_enter_state(PlayerStates new_state)
+void set_player_state(PlayerStates new_state)
 {
 	if(new_state == PLAYER.state) return;
 
-	PlayerStates last_state = PLAYER.state;
+	//PlayerStates last_state = PLAYER.state;
 	PLAYER.state = new_state;
 
 	switch(new_state)
@@ -138,7 +138,8 @@ void process_player(float delta)
 				{
 					on_floor = 1;
 					PLAYER.velocity.y = 0;
-					PLAYER.position.y = floor_ray_collision.point.y ; 	
+					PLAYER.position.y = floor_ray_collision.point.y ; 
+					set_player_state(PLAYER_IDLE_STATE);	
 					
 				}
 				else if(floor_ray_collision.distance > .5)
@@ -147,8 +148,10 @@ void process_player(float delta)
 					{
 						on_air = 1;
 						PLAYER.velocity.y = float_move_toward(PLAYER.velocity.y, PLAYER.velocity.y - delta * 25, delta * 400);
+						set_player_state(PLAYER_FALL_STATE);
 					}
 				}
+				
 							
 			}
 		}
@@ -161,7 +164,16 @@ void process_player(float delta)
 			)
 		)
 		{
-			
+
+			if (PLAYER.state == PLAYER_FALL_STATE)
+                if (PLAYER.direction.x == 0 && PLAYER.direction.x == 0)
+                {
+                        PLAYER.position = Vector3Add(PLAYER.position, Vector3Scale(PLAYER.last_move_direction, delta));
+                        return;
+                }
+
+
+
 			// 1
 			PLAYER.position.x = temp_position.x;
 			PLAYER.position.z = temp_position.z;
@@ -184,7 +196,21 @@ void process_player(float delta)
 			}
 			//5
 			if(!collide_temp) {PLAYER.position = temp_position;}
-			
+			//6
+			vel_temp.z = PLAYER.velocity.z;
+			vel_temp.x = 0;
+			temp_position = Vector3Add(PLAYER.position, Vector3Scale(vel_temp, delta));
+			//7
+			for(int j = 0; j < collisions_scene_walls.len; j++)
+			{
+				collide_temp = 	CheckCollisionBoxSphere(
+									collisions_scene_walls.items[j], 
+									(Vector3){temp_position.x, temp_position.y + .5, temp_position.z}, 0.3f 
+								);
+				if(collide_temp) {break;}
+			}
+			//8
+			if(!collide_temp) {PLAYER.position = temp_position;}
 
 			/*
 			// 1
