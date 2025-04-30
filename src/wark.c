@@ -59,7 +59,8 @@ void load_assets()
 		&model_collisions_scene_walls, 
 		&collisions_scene_walls, 
 		"assets/3dmodels/scene_0/scene_0_collisions.glb",
-		"model_collisions_scene_0_collisions"
+		"model_collisions_scene_collisions"
+		
 	);
 }
 
@@ -78,7 +79,7 @@ void setup()
     CAMERA.position = (Vector3){ -15, 20.0f, 15.0f };  // CAMERA position
     CAMERA.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // CAMERA looking at point
     CAMERA.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // CAMERA up vector (rotation towards target)
-    CAMERA.fovy = 20.0f;                                // CAMERA field-of-view Y
+    CAMERA.fovy = 45.0f;                                // CAMERA field-of-view Y
     CAMERA.projection = CAMERA_PERSPECTIVE;             // CAMERA mode type
 }
 
@@ -86,11 +87,11 @@ void reset()
 {
 	//PLAYER.speed = 10.0f;
 	//PLAYER.angle = 0; 
-	PLAYER.position = (Vector3){1.5, 7, 16};
+	PLAYER.position = (Vector3){1.3, 5, 11};
     PLAYER.velocity = V3ZERO;
     CAMERA.position = (Vector3){ -15, 20.0f, 15.0f };
     
-    player_enter_state(PLAYER_IDLE_STATE);
+    //player_enter_state(PLAYER_IDLE_STATE);
 }
 
 
@@ -118,10 +119,10 @@ void draw()
 		BeginMode3D(CAMERA);        
 				//MAP
                 
-                //DrawModel(model_map_scene, Vector3Zero(), 1.0f, WHITE);
+                DrawModel(model_map_scene, Vector3Zero(), 1.0f, WHITE);
                 
               	for(int i = 0; i < collisions_scene_walls.len; i++){DrawBoundingBox(collisions_scene_walls.items[i], ORANGE);}
-               
+                
 
                 //DrawModel(model_collisions_scene_walls, Vector3Zero(), 1.0f, WHITE);
                 
