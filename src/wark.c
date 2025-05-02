@@ -73,7 +73,7 @@ void reset()
 	PLAYER.position = (Vector3){1.3, 5, 11};
     PLAYER.velocity = V3ZERO;
     CAMERA.position = (Vector3){ -15, 15, 15.0f };
-    CAMERA.fovy = 35.0f;
+    CAMERA.fovy = 15.0f;
 
 }
 
@@ -116,8 +116,19 @@ void draw()
                 
 				//PLAYER
 				//DrawModel(model_player, PLAYER.position, 1.0f, WHITE);
+				/*
+				DrawRay((Ray){(Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z + .16}, DOWN_AXIS}, GREEN);
+				DrawRay((Ray){(Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z - .16}, DOWN_AXIS}, GREEN);
+				DrawRay((Ray){(Vector3){PLAYER.position.x + .16, PLAYER.position.y + .5, PLAYER.position.z}, DOWN_AXIS}, GREEN);
+				DrawRay((Ray){(Vector3){PLAYER.position.x - .16, PLAYER.position.y + .5, PLAYER.position.z}, DOWN_AXIS}, GREEN);
 				
-				//DrawRay((Ray){PLAYER.position, DOWN_AXIS}, GREEN);            
+				DrawRay((Ray){(Vector3){PLAYER.position.x + .1, PLAYER.position.y + .5, PLAYER.position.z + .1}, DOWN_AXIS}, GREEN);
+				DrawRay((Ray){(Vector3){PLAYER.position.x - .1, PLAYER.position.y + .5, PLAYER.position.z - .1}, DOWN_AXIS}, GREEN);
+				DrawRay((Ray){(Vector3){PLAYER.position.x + .1, PLAYER.position.y + .5, PLAYER.position.z - .1}, DOWN_AXIS}, GREEN);
+				DrawRay((Ray){(Vector3){PLAYER.position.x - .1, PLAYER.position.y + .5, PLAYER.position.z + .1}, DOWN_AXIS}, GREEN);
+				
+				DrawRay((Ray){PLAYER.position, DOWN_AXIS}, GREEN);
+				*/            
                 
         EndMode3D();	
        // DrawFPS(10, 10);

@@ -127,7 +127,7 @@ void process_player(float delta)
 								);
 			if(floor_ray_collision.hit)
 			{
-				//printf("DISTANCE %f\n", floor_ray_collision.distance);	
+				
 				if(floor_ray_collision.distance <= .24)
 				{
 					on_floor = 1;
@@ -154,7 +154,7 @@ void process_player(float delta)
 		(
 			CheckCollisionBoxSphere(
 				collisions_scene_walls.items[i], 
-				(Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z}, 0.25f 
+				(Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z}, 0.3f 
 			)
 		)
 		{
@@ -185,7 +185,7 @@ void process_player(float delta)
 			{
 				collide_temp = CheckCollisionBoxSphere(
 									collisions_scene_walls.items[j], 
-									(Vector3){temp_position.x, temp_position.y + .5, temp_position.z}, 0.25f 
+									(Vector3){temp_position.x, temp_position.y + .5, temp_position.z}, 0.3f 
 								);
 				if(collide_temp) {break;}
 			}
@@ -200,7 +200,7 @@ void process_player(float delta)
 			{
 				collide_temp = 	CheckCollisionBoxSphere(
 									collisions_scene_walls.items[j], 
-									(Vector3){temp_position.x, temp_position.y + .5, temp_position.z}, 0.25f 
+									(Vector3){temp_position.x, temp_position.y + .5, temp_position.z}, 0.3f 
 								);
 				if(collide_temp) {break;}
 			}
