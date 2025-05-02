@@ -1,23 +1,5 @@
 #include "utils.c"
 
-typedef struct 
-{
-	float speed;
-	int health;
-	float angle;
-	Vector2 direction;
-	Vector3 last_move_direction;
-	Vector3 velocity;
-	Vector3 position;
-	unsigned char state;
-} Player;
-
-typedef struct 
-{
-	int last_state;
-	Player player;
-	Camera3D camera;
-} GameState;
 
 GameState* game_state = NULL;
 
@@ -25,12 +7,12 @@ GameState* game_state = NULL;
 #define CAMERA (game_state->camera)
 
 Model model_map_scene = {0};
-Model model_player = {0};
+
+
 
 Model model_collisions_scene_walls = {0};
 BoundingBoxSlice collisions_scene_walls = {0};
-Model model_collisions_scene_floors = {0};
-Triangle3DSlice collisions_scene_floors = {0};
+
 
 float dt;
 
@@ -53,8 +35,9 @@ void load_assets()
     printf("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-\n");
     printf("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-\n");
 	load_model(&model_map_scene, "assets/3dmodels/scene_0/scene_0.glb", "model_map_scene");
-	load_model(&model_player, "assets/3dmodels/char_f.glb", "model_player");
-	
+	load_model(&PLAYER.character.model, "assets/3dmodels/char_f.glb", "model_player");
+	load_model_animations(&PLAYER.character, "assets/3dmodels/char_f.glb", "model_player");
+
 	load_scene_collisions(
 		&model_collisions_scene_walls, 
 		&collisions_scene_walls, 
@@ -79,7 +62,7 @@ void setup()
     CAMERA.position = (Vector3){ -15, 20.0f, 15.0f };  // CAMERA position
     CAMERA.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // CAMERA looking at point
     CAMERA.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // CAMERA up vector (rotation towards target)
-    CAMERA.fovy = 45.0f;                                // CAMERA field-of-view Y
+    CAMERA.fovy = 35.0f;                                // CAMERA field-of-view Y
     CAMERA.projection = CAMERA_PERSPECTIVE;             // CAMERA mode type
 }
 
@@ -89,9 +72,9 @@ void reset()
 	//PLAYER.angle = 0; 
 	PLAYER.position = (Vector3){1.3, 5, 11};
     PLAYER.velocity = V3ZERO;
-    CAMERA.position = (Vector3){ -15, 20.0f, 15.0f };
-    
-    //player_enter_state(PLAYER_IDLE_STATE);
+    CAMERA.position = (Vector3){ -15, 15, 15.0f };
+    CAMERA.fovy = 35.0f;
+
 }
 
 
@@ -121,28 +104,26 @@ void draw()
                 
                 DrawModel(model_map_scene, Vector3Zero(), 1.0f, WHITE);
                 
-              	for(int i = 0; i < collisions_scene_walls.len; i++){DrawBoundingBox(collisions_scene_walls.items[i], ORANGE);}
+
+
+                // PLAYER
+                draw_player();
+
+              	//for(int i = 0; i < collisions_scene_walls.len; i++){DrawBoundingBox(collisions_scene_walls.items[i], ORANGE);}
                 
 
                 //DrawModel(model_collisions_scene_walls, Vector3Zero(), 1.0f, WHITE);
                 
 				//PLAYER
 				//DrawModel(model_player, PLAYER.position, 1.0f, WHITE);
-				DrawModelEx(
-					model_player, 
-					PLAYER.position,
-					UP_AXIS,
-					PLAYER.angle,
-					V3ONE,
-					WHITE
-				);
-				DrawRay((Ray){PLAYER.position, DOWN_AXIS}, GREEN);            
+				
+				//DrawRay((Ray){PLAYER.position, DOWN_AXIS}, GREEN);            
                 
         EndMode3D();	
-        DrawFPS(10, 10);
+       // DrawFPS(10, 10);
         //DrawText(TextFormat(" %d , %d ", model_map_scene.materialCount, model_map_scene.meshCount), 30,30,42,BLACK);
-		DrawText(TextFormat(" %f , %f , %f", PLAYER.position.x, PLAYER.position.y, PLAYER.position.z ), 30,30,42,BLACK);
-		DrawText(TextFormat(" %s ", get_current_player_state() ), 30,70,42,BLACK);
+		//DrawText(TextFormat(" %f , %f , %f", PLAYER.position.x, PLAYER.position.y, PLAYER.position.z ), 30,30,42,BLACK);
+		//DrawText(TextFormat(" %s ", get_current_player_state() ), 30,70,42,BLACK);
 
 
     EndDrawing();
@@ -162,6 +143,8 @@ void* wark_main(void* state)
     	//( ￣ー￣)φ__
     	setup_raywindow();
 		load_assets();
+		PLAYER.state = 200;   
+    	set_player_state(PLAYER_IDLE_STATE);
         printf("[RELOAD] Recarga en Caliente exitosa\n");
     }
 

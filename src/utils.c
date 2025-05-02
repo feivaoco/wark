@@ -15,6 +15,8 @@
 #define V4ZERO (Vector4){0,0,0,0}
 #define MATRIXZERO (Matrix){0,0,0,1, 0,0,0,1, 0,0,0,1, 0,0,0,1}
 
+
+
 typedef struct 
 {
 	Vector3 points[3];
@@ -33,6 +35,43 @@ typedef struct
 	size_t len;
 	BoundingBox *items;
 } BoundingBoxSlice;
+
+
+
+
+
+typedef struct 
+{
+	Model model;
+	ModelAnimation *model_animations;
+	int anims_count;
+	unsigned int anim_index;
+	unsigned int anim_current_frame;
+}CharacterModel;
+
+typedef struct 
+{
+	CharacterModel character;
+	
+	float speed;
+	int health;
+	float angle;
+	Vector2 direction;
+	Vector3 last_move_direction;
+	Vector3 velocity;
+	Vector3 position;
+	unsigned char state;
+} Player;
+
+typedef struct 
+{
+	int last_state;
+	Player player;
+	Camera3D camera;
+} GameState;
+
+
+
 
 void append_Triangle3DSlice(Triangle3DSlice *xs, Triangle3D x)
 {
@@ -104,7 +143,27 @@ int int_move_toward(int in, int to, float delta){ if (abs(to - in) <= delta) ret
 
 
 
+void load_model_animations(CharacterModel *character, const char *file_path, const char *text_debug)
+{
+	character -> anims_count = character -> anims_count > 0 ? character -> anims_count : 0;
 
+	if (character -> anims_count > 0)
+	{
+		printf("[INFO] MODEL ANIMATIONS Revisando para hacer unload a %s\n", text_debug);
+		if (IsModelAnimationValid(character -> model, character -> model_animations[0]))
+		{
+			UnloadModelAnimations(character -> model_animations, character -> anims_count);
+			printf("[INFO] MODEL ANIMATIONS Unload a %s\n", text_debug); 
+		}
+	}
+	
+	printf("[INFO] MODEL ANIMATIONS Load a %s\n", text_debug);	
+	
+	character -> anim_index = 0;
+	character -> anim_current_frame = 0;
+	character -> model_animations = LoadModelAnimations(file_path, &character -> anims_count);
+
+}
 
 
 void load_model(Model *model, const char *file_path, const char *text_debug)
@@ -129,6 +188,17 @@ void load_model(Model *model, const char *file_path, const char *text_debug)
 	}
 	printf("[INFO] Load a %s\n", text_debug);
 	local_model = LoadModel(file_path);
+	for(int i = 1; i < local_model.materialCount; i++)
+		if(IsMaterialValid(local_model.materials[i]))
+		{
+			unsigned int j = 0;
+			while(IsTextureValid(local_model.materials[i].maps[j].texture))
+			{
+				if( local_model.materials[i].maps[j].texture.id >= 3) 
+					SetTextureFilter(local_model.materials[i].maps[j].texture, TEXTURE_FILTER_BILINEAR);
+				j += 1;
+			}
+		}	
 	*model = local_model;
 }
 
@@ -155,6 +225,18 @@ void load_scene_collisions
 
 
 
+int get_index_animation(const char *animation_name, ModelAnimation *model_animations, int animations_count)
+{
+	for(unsigned int i = 0; i < animations_count; i++)
+	{
+		if(!strcmp(animation_name, model_animations[i].name))
+		{
+			return i;
+		}
+	}
+	printf("[ERROR] No se encontro ninguna animacion con el nombre de \"%s\"\n", animation_name);
+	return 0;
+}
 
 
 
