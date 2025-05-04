@@ -121,40 +121,48 @@ void process_player(float delta)
 	{
 		if (!on_floor)
 		{
-			floor_ray_collision = GetRayCollisionBox(
-									(Ray){PLAYER.position, DOWN_AXIS},
-									collisions_scene_walls.items[i]
-								);
-			if(floor_ray_collision.hit)
+			RayCollision temp0 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x, PLAYER.position.y, 	PLAYER.position.z + .16}, DOWN_AXIS}, collisions_scene_walls.items[i]); 
+			RayCollision temp1 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x, PLAYER.position.y , 	PLAYER.position.z - .16}, DOWN_AXIS}, collisions_scene_walls.items[i]); 
+			RayCollision temp2 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x + .16, PLAYER.position.y , PLAYER.position.z}, DOWN_AXIS}, collisions_scene_walls.items[i]); 
+			RayCollision temp3 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x - .16, PLAYER.position.y , PLAYER.position.z}, DOWN_AXIS}, collisions_scene_walls.items[i]); 
+			RayCollision temp4 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x + .1, PLAYER.position.y , PLAYER.position.z + .1}, DOWN_AXIS}, collisions_scene_walls.items[i]);
+			RayCollision temp5 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x - .1, PLAYER.position.y , PLAYER.position.z - .1}, DOWN_AXIS}, collisions_scene_walls.items[i]);
+			RayCollision temp6 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x + .1, PLAYER.position.y , PLAYER.position.z - .1}, DOWN_AXIS}, collisions_scene_walls.items[i]);
+			RayCollision temp7 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x - .1, PLAYER.position.y , PLAYER.position.z + .1}, DOWN_AXIS}, collisions_scene_walls.items[i]);
+
+			RayCollision rays[] = {temp0, temp1, temp2, temp3, temp4, temp5, temp6, temp7};
+
+			for (int j = 0; j < 8; j++)
 			{
-				
-				if(floor_ray_collision.distance <= .24)
+				if (rays[j].hit)
 				{
-					on_floor = 1;
-					PLAYER.velocity.y = 0;
-					PLAYER.position.y = floor_ray_collision.point.y ; 
-					if (PLAYER.state != PLAYER_WALK_STATE) set_player_state(PLAYER_IDLE_STATE);
-					
-				}
-				else if(floor_ray_collision.distance > .5)
-				{	
-					if(!on_air)
+					if (rays[j].distance <= 0.2f)
 					{
-						on_air = 1;
-						PLAYER.velocity.y = float_move_toward(PLAYER.velocity.y, PLAYER.velocity.y - delta * 25, delta * 400);
-						set_player_state(PLAYER_FALL_STATE);
+						on_floor = 1;
+						PLAYER.velocity.y = 0;
+						PLAYER.position.y = rays[j].point.y;
+						if (PLAYER.state != PLAYER_WALK_STATE) set_player_state(PLAYER_IDLE_STATE);
+						break; // Ya tocamos el suelo, no necesitamos seguir comprobando
+					}
+					else
+					{
+						if (!on_air)
+						{
+							on_air = 1;
+							PLAYER.velocity.y = float_move_toward(PLAYER.velocity.y, PLAYER.velocity.y - delta * 25, delta * 400);
+							set_player_state(PLAYER_FALL_STATE);
+						}
 					}
 				}
-				
-							
 			}
 		}
+
 
 		if
 		(
 			CheckCollisionBoxSphere(
 				collisions_scene_walls.items[i], 
-				(Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z}, 0.3f 
+				(Vector3){PLAYER.position.x, PLAYER.position.y + .45, PLAYER.position.z}, .4f
 			)
 		)
 		{
@@ -185,7 +193,7 @@ void process_player(float delta)
 			{
 				collide_temp = CheckCollisionBoxSphere(
 									collisions_scene_walls.items[j], 
-									(Vector3){temp_position.x, temp_position.y + .5, temp_position.z}, 0.3f 
+									(Vector3){temp_position.x, temp_position.y + .45, temp_position.z}, .4f 
 								);
 				if(collide_temp) {break;}
 			}
@@ -200,7 +208,7 @@ void process_player(float delta)
 			{
 				collide_temp = 	CheckCollisionBoxSphere(
 									collisions_scene_walls.items[j], 
-									(Vector3){temp_position.x, temp_position.y + .5, temp_position.z}, 0.3f 
+									(Vector3){temp_position.x, temp_position.y + .45, temp_position.z}, .4f 
 								);
 				if(collide_temp) {break;}
 			}

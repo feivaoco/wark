@@ -121,20 +121,21 @@ void draw()
 				DrawRay((Ray){(Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z - .16}, DOWN_AXIS}, GREEN);
 				DrawRay((Ray){(Vector3){PLAYER.position.x + .16, PLAYER.position.y + .5, PLAYER.position.z}, DOWN_AXIS}, GREEN);
 				DrawRay((Ray){(Vector3){PLAYER.position.x - .16, PLAYER.position.y + .5, PLAYER.position.z}, DOWN_AXIS}, GREEN);
-				
 				DrawRay((Ray){(Vector3){PLAYER.position.x + .1, PLAYER.position.y + .5, PLAYER.position.z + .1}, DOWN_AXIS}, GREEN);
 				DrawRay((Ray){(Vector3){PLAYER.position.x - .1, PLAYER.position.y + .5, PLAYER.position.z - .1}, DOWN_AXIS}, GREEN);
 				DrawRay((Ray){(Vector3){PLAYER.position.x + .1, PLAYER.position.y + .5, PLAYER.position.z - .1}, DOWN_AXIS}, GREEN);
 				DrawRay((Ray){(Vector3){PLAYER.position.x - .1, PLAYER.position.y + .5, PLAYER.position.z + .1}, DOWN_AXIS}, GREEN);
 				
 				DrawRay((Ray){PLAYER.position, DOWN_AXIS}, GREEN);
-				*/            
+				*/       
+				//DrawSphere((Vector3){PLAYER.position.x, PLAYER.position.y + .4, PLAYER.position.z}, 0.4f , RED );     
                 
         EndMode3D();	
        // DrawFPS(10, 10);
         //DrawText(TextFormat(" %d , %d ", model_map_scene.materialCount, model_map_scene.meshCount), 30,30,42,BLACK);
 		//DrawText(TextFormat(" %f , %f , %f", PLAYER.position.x, PLAYER.position.y, PLAYER.position.z ), 30,30,42,BLACK);
 		//DrawText(TextFormat(" %s ", get_current_player_state() ), 30,70,42,BLACK);
+
 
 
     EndDrawing();
