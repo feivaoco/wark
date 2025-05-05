@@ -10,8 +10,10 @@ Model model_map_scene = {0};
 
 
 
-Model model_collisions_scene_walls = {0};
-BoundingBoxSlice collisions_scene_walls = {0};
+Model model_scene_wall_collisions = {0};
+BoundingBoxSlice scene_wall_collisions = {0};
+Model model_scene_floor_collisions = {0};
+BoundingBoxSlice scene_floor_collisions = {0};
 
 
 float dt;
@@ -39,10 +41,17 @@ void load_assets()
 	load_model_animations(&PLAYER.character, "assets/3dmodels/char_f.glb", "model_player");
 
 	load_scene_collisions(
-		&model_collisions_scene_walls, 
-		&collisions_scene_walls, 
-		"assets/3dmodels/scene_0/scene_0_collisions.glb",
-		"model_collisions_scene_collisions"
+		&model_scene_wall_collisions, 
+		&scene_wall_collisions, 
+		"assets/3dmodels/scene_0/scene_0_wall_collisions.glb",
+		"model_scene_wall_collisions"
+		
+	);
+	load_scene_collisions(
+		&model_scene_floor_collisions, 
+		&scene_floor_collisions, 
+		"assets/3dmodels/scene_0/scene_0_floor_collisions.glb",
+		"model_scene_floor_collisions"
 		
 	);
 }
@@ -70,10 +79,9 @@ void reset()
 {
 	//PLAYER.speed = 10.0f;
 	//PLAYER.angle = 0; 
-	PLAYER.position = (Vector3){1.3, 5, 11};
-    PLAYER.velocity = V3ZERO;
-    CAMERA.position = (Vector3){ -15, 15, 15.0f };
-    CAMERA.fovy = 15.0f;
+	reset_player();
+	CAMERA.position = (Vector3){ -15, 15, 15.0f };
+	CAMERA.fovy = 15.0f;
 
 }
 
@@ -103,36 +111,23 @@ void draw()
 				//MAP
                 
                 DrawModel(model_map_scene, Vector3Zero(), 1.0f, WHITE);
+                //DrawModel(model_scene_floor_collisions, Vector3Zero(), 1.0f, WHITE);
+              	//for(int i = 0; i < scene_wall_collisions.len; i++){DrawBoundingBox(scene_wall_collisions.items[i], ORANGE);}
+                //DrawModel(model_scene_wall_collisions, Vector3Zero(), 1.0f, WHITE);
                 
 
 
                 // PLAYER
                 draw_player();
 
-              	//for(int i = 0; i < collisions_scene_walls.len; i++){DrawBoundingBox(collisions_scene_walls.items[i], ORANGE);}
-                
+                //for(int i = 0; i < 8; i++)DrawRay((Ray){(Vector3){PLAYER.position.x + ray_floor_collision_offsets[i].x, PLAYER.position.y + 1, PLAYER.position.z + ray_floor_collision_offsets[i].y },DOWN_AXIS}, GREEN);
+				//DrawSphere((Vector3){PLAYER.position.x, PLAYER.position.y + .45, PLAYER.position.z}, .2f , RED );     
 
-                //DrawModel(model_collisions_scene_walls, Vector3Zero(), 1.0f, WHITE);
-                
-				//PLAYER
-				//DrawModel(model_player, PLAYER.position, 1.0f, WHITE);
-				/*
-				DrawRay((Ray){(Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z + .16}, DOWN_AXIS}, GREEN);
-				DrawRay((Ray){(Vector3){PLAYER.position.x, PLAYER.position.y + .5, PLAYER.position.z - .16}, DOWN_AXIS}, GREEN);
-				DrawRay((Ray){(Vector3){PLAYER.position.x + .16, PLAYER.position.y + .5, PLAYER.position.z}, DOWN_AXIS}, GREEN);
-				DrawRay((Ray){(Vector3){PLAYER.position.x - .16, PLAYER.position.y + .5, PLAYER.position.z}, DOWN_AXIS}, GREEN);
-				DrawRay((Ray){(Vector3){PLAYER.position.x + .1, PLAYER.position.y + .5, PLAYER.position.z + .1}, DOWN_AXIS}, GREEN);
-				DrawRay((Ray){(Vector3){PLAYER.position.x - .1, PLAYER.position.y + .5, PLAYER.position.z - .1}, DOWN_AXIS}, GREEN);
-				DrawRay((Ray){(Vector3){PLAYER.position.x + .1, PLAYER.position.y + .5, PLAYER.position.z - .1}, DOWN_AXIS}, GREEN);
-				DrawRay((Ray){(Vector3){PLAYER.position.x - .1, PLAYER.position.y + .5, PLAYER.position.z + .1}, DOWN_AXIS}, GREEN);
-				
-				DrawRay((Ray){PLAYER.position, DOWN_AXIS}, GREEN);
-				*/       
-				//DrawSphere((Vector3){PLAYER.position.x, PLAYER.position.y + .4, PLAYER.position.z}, 0.4f , RED );     
+				       
                 
         EndMode3D();	
-       // DrawFPS(10, 10);
-        //DrawText(TextFormat(" %d , %d ", model_map_scene.materialCount, model_map_scene.meshCount), 30,30,42,BLACK);
+       	//DrawFPS(10, 10);
+       	//DrawText(TextFormat(" %d , %d ", model_map_scene.materialCount, model_map_scene.meshCount), 30,30,42,BLACK);
 		//DrawText(TextFormat(" %f , %f , %f", PLAYER.position.x, PLAYER.position.y, PLAYER.position.z ), 30,30,42,BLACK);
 		//DrawText(TextFormat(" %s ", get_current_player_state() ), 30,70,42,BLACK);
 
@@ -155,8 +150,7 @@ void* wark_main(void* state)
     	//( ￣ー￣)φ__
     	setup_raywindow();
 		load_assets();
-		PLAYER.state = 200;   
-    	set_player_state(PLAYER_IDLE_STATE);
+		reload_player();
         printf("[RELOAD] Recarga en Caliente exitosa\n");
     }
 

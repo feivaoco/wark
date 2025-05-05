@@ -7,6 +7,45 @@ typedef enum
 	PLAYER_FALL_STATE = 2,
 } PlayerStates;
 
+unsigned int current_floor_index = 0;
+
+Vector2 ray_floor_collision_offsets[] = {
+	{    0,		 .17},
+	{    0, 		-.17},
+	{  .17,		   0},
+	{ -.17,		   0},
+	{   .12,		  .12},
+	{  -.12,		 -.12},
+	{   .12,		 -.12},
+	{  -.12,		  .12}
+};	
+
+
+unsigned int get_index_on_current_floor_collision()
+{
+	RayCollision tmp = {0};
+
+	unsigned int index_floor = 0;
+	float distance_min = 10000000.0f;
+
+	for(int i = 0; i < scene_floor_collisions.len; i++)
+	{
+		tmp = GetRayCollisionBox(
+				(Ray){(Vector3){PLAYER.position.x, PLAYER.position.y, PLAYER.position.z}, DOWN_AXIS}, 
+				scene_floor_collisions.items[i]
+			);
+		if (tmp.hit)
+		{
+			if(tmp.distance < distance_min)
+			{
+				distance_min = tmp.distance;
+				index_floor = i;
+			}
+		} 
+	}
+	return index_floor;
+}
+
 const char* get_current_player_state()
 {
 	switch(PLAYER.state)
@@ -56,9 +95,24 @@ void setup_player()
 	PLAYER.angle = 0;
 
 	PLAYER.state = 200;
+
 	set_player_state(PLAYER_IDLE_STATE);
+	current_floor_index = get_index_on_current_floor_collision();
 }
 
+void reset_player()
+{
+	PLAYER.position = (Vector3){1.3, 5, 11};
+    	PLAYER.velocity = V3ZERO;
+    	current_floor_index = get_index_on_current_floor_collision();
+}
+
+void reload_player()
+{
+	PLAYER.state = 200;   
+    	set_player_state(PLAYER_IDLE_STATE);
+    	current_floor_index = get_index_on_current_floor_collision();
+}
 
 void process_player(float delta)
 {
@@ -113,56 +167,69 @@ void process_player(float delta)
 	Vector3 temp_position = PLAYER.position;
 	PLAYER.position = Vector3Add(PLAYER.position, Vector3Scale(PLAYER.velocity, delta));
 
-	RayCollision floor_ray_collision = {0};
 	unsigned char on_floor = 0;
 	unsigned char on_air = 0;
+	RayCollision ray_temp = {0};
+	unsigned char ponderacion_floor = 0;
+	
+	check_floor:
 
-	for(int i = 0; i < collisions_scene_walls.len; i++)
+	for (int x = 0; x < 8; x++)
 	{
-		if (!on_floor)
+		ray_temp = GetRayCollisionBox(
+								(Ray){(Vector3){PLAYER.position.x + ray_floor_collision_offsets[x].x, 
+										PLAYER.position.y, 
+										PLAYER.position.z + ray_floor_collision_offsets[x].y 
+										},
+									DOWN_AXIS},
+								scene_floor_collisions.items[current_floor_index]
+							); 
+		if (ray_temp.hit)
 		{
-			RayCollision temp0 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x, PLAYER.position.y, 	PLAYER.position.z + .16}, DOWN_AXIS}, collisions_scene_walls.items[i]); 
-			RayCollision temp1 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x, PLAYER.position.y , 	PLAYER.position.z - .16}, DOWN_AXIS}, collisions_scene_walls.items[i]); 
-			RayCollision temp2 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x + .16, PLAYER.position.y , PLAYER.position.z}, DOWN_AXIS}, collisions_scene_walls.items[i]); 
-			RayCollision temp3 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x - .16, PLAYER.position.y , PLAYER.position.z}, DOWN_AXIS}, collisions_scene_walls.items[i]); 
-			RayCollision temp4 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x + .1, PLAYER.position.y , PLAYER.position.z + .1}, DOWN_AXIS}, collisions_scene_walls.items[i]);
-			RayCollision temp5 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x - .1, PLAYER.position.y , PLAYER.position.z - .1}, DOWN_AXIS}, collisions_scene_walls.items[i]);
-			RayCollision temp6 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x + .1, PLAYER.position.y , PLAYER.position.z - .1}, DOWN_AXIS}, collisions_scene_walls.items[i]);
-			RayCollision temp7 = GetRayCollisionBox((Ray){(Vector3){PLAYER.position.x - .1, PLAYER.position.y , PLAYER.position.z + .1}, DOWN_AXIS}, collisions_scene_walls.items[i]);
-
-			RayCollision rays[] = {temp0, temp1, temp2, temp3, temp4, temp5, temp6, temp7};
-
-			for (int j = 0; j < 8; j++)
+			ponderacion_floor = 1;
+			if (ray_temp.distance <= 0.2f)
 			{
-				if (rays[j].hit)
-				{
-					if (rays[j].distance <= 0.2f)
-					{
-						on_floor = 1;
-						PLAYER.velocity.y = 0;
-						PLAYER.position.y = rays[j].point.y;
-						if (PLAYER.state != PLAYER_WALK_STATE) set_player_state(PLAYER_IDLE_STATE);
-						break; // Ya tocamos el suelo, no necesitamos seguir comprobando
-					}
-					else
-					{
-						if (!on_air)
-						{
-							on_air = 1;
-							PLAYER.velocity.y = float_move_toward(PLAYER.velocity.y, PLAYER.velocity.y - delta * 25, delta * 400);
-							set_player_state(PLAYER_FALL_STATE);
-						}
-					}
-				}
+				on_floor = 1;
+				on_air = 0;
+				break;
+			}
+			else
+			{
+				on_air = 1;
 			}
 		}
+	}
+
+	if (on_floor )
+	{
+		PLAYER.velocity.y = 0;
+		PLAYER.position.y = ray_temp.point.y;
+		if (PLAYER.state != PLAYER_WALK_STATE) set_player_state(PLAYER_IDLE_STATE);
+	}
+	else if(on_air)
+	{
+
+		PLAYER.velocity.y = float_move_toward(PLAYER.velocity.y, PLAYER.velocity.y - delta * 25, delta * 400);
+		set_player_state(PLAYER_FALL_STATE);
+		current_floor_index = get_index_on_current_floor_collision();
+	}
+
+	if (!ponderacion_floor){
+		current_floor_index = get_index_on_current_floor_collision();
+		goto check_floor;
+	}
+	
 
 
+
+	for(int i = 0; i < scene_wall_collisions.len; i++)
+	{
+		
 		if
 		(
 			CheckCollisionBoxSphere(
-				collisions_scene_walls.items[i], 
-				(Vector3){PLAYER.position.x, PLAYER.position.y + .45, PLAYER.position.z}, .4f
+				scene_wall_collisions.items[i], 
+				(Vector3){PLAYER.position.x, PLAYER.position.y + .45, PLAYER.position.z}, .2f 
 			)
 		)
 		{
@@ -189,11 +256,11 @@ void process_player(float delta)
 
 
 			// 4
-			for(int j = 0; j < collisions_scene_walls.len; j++)
+			for(int j = 0; j < scene_wall_collisions.len; j++)
 			{
 				collide_temp = CheckCollisionBoxSphere(
-									collisions_scene_walls.items[j], 
-									(Vector3){temp_position.x, temp_position.y + .45, temp_position.z}, .4f 
+									scene_wall_collisions.items[j], 
+									(Vector3){temp_position.x, temp_position.y + .45, temp_position.z}, .2f 
 								);
 				if(collide_temp) {break;}
 			}
@@ -204,11 +271,11 @@ void process_player(float delta)
 			vel_temp.x = 0;
 			temp_position = Vector3Add(PLAYER.position, Vector3Scale(vel_temp, delta));
 			//7
-			for(int j = 0; j < collisions_scene_walls.len; j++)
+			for(int j = 0; j < scene_wall_collisions.len; j++)
 			{
 				collide_temp = 	CheckCollisionBoxSphere(
-									collisions_scene_walls.items[j], 
-									(Vector3){temp_position.x, temp_position.y + .45, temp_position.z}, .4f 
+									scene_wall_collisions.items[j], 
+									(Vector3){temp_position.x, temp_position.y + .45, temp_position.z}, .2f 
 								);
 				if(collide_temp) {break;}
 			}
