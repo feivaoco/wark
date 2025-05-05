@@ -1,48 +1,57 @@
-#define JUMP_MAX_TIME 0.5
-
+#define JUMP_MAX_TIME 0.11
 typedef enum
 {
 	PLAYER_IDLE_STATE = 0,
 	PLAYER_WALK_STATE = 1,
 	PLAYER_FALL_STATE = 2,
+	PLAYER_JUMP_STATE = 3,
 } PlayerStates;
 
 unsigned int current_floor_index = 0;
+unsigned int used_jumps = 0;
 
 Vector2 ray_floor_collision_offsets[] = {
-	{    0,		 .17},
-	{    0, 		-.17},
-	{  .17,		   0},
-	{ -.17,		   0},
-	{   .12,		  .12},
-	{  -.12,		 -.12},
-	{   .12,		 -.12},
-	{  -.12,		  .12}
+	{    0,		 .175},
+	{    0, 		-.175},
+	{  .175,		   0},
+	{ -.175,		   0},
+	{   .125,		  .125},
+	{  -.125,		 -.125},
+	{   .125,		 -.125},
+	{  -.125,		  .125}
 };	
 
+float jump_time = 0;
 
 unsigned int get_index_on_current_floor_collision()
 {
 	RayCollision tmp = {0};
 
-	unsigned int index_floor = 0;
+	unsigned int index_floor = -99;
 	float distance_min = 10000000.0f;
-
-	for(int i = 0; i < scene_floor_collisions.len; i++)
+	for (int x = 0; x < 8; x++)
 	{
-		tmp = GetRayCollisionBox(
-				(Ray){(Vector3){PLAYER.position.x, PLAYER.position.y, PLAYER.position.z}, DOWN_AXIS}, 
-				scene_floor_collisions.items[i]
-			);
-		if (tmp.hit)
+		for(int i = 0; i < scene_floor_collisions.len; i++)
 		{
-			if(tmp.distance < distance_min)
+			tmp = GetRayCollisionBox(
+					(Ray){(Vector3){PLAYER.position.x + ray_floor_collision_offsets[x].x, 
+							PLAYER.position.y, 
+							PLAYER.position.z + ray_floor_collision_offsets[x].y 
+							},
+						DOWN_AXIS},
+					scene_floor_collisions.items[i]
+				); 
+			if (tmp.hit)
 			{
-				distance_min = tmp.distance;
-				index_floor = i;
-			}
-		} 
+				if(tmp.distance < distance_min)
+				{
+					distance_min = tmp.distance;
+					index_floor = i;
+				}
+			} 
+		}
 	}
+	if(index_floor== -99) index_floor = 0;
 	return index_floor;
 }
 
@@ -71,15 +80,22 @@ void set_player_state(PlayerStates new_state)
 	switch(new_state)
 	{
 		case PLAYER_IDLE_STATE:	
-			PLAYER.character.anim_index = get_index_animation("Idle", PLAYER.character.model_animations, PLAYER.character.anims_count);
+			used_jumps = 0;
+			PLAYER.character.anim_index = get_index_animation("Idle", PLAYER.character);
 			break;
 		case PLAYER_WALK_STATE:
 			
-			PLAYER.character.anim_index = get_index_animation("Walk", PLAYER.character.model_animations, PLAYER.character.anims_count);
+			PLAYER.character.anim_index = get_index_animation("Walk", PLAYER.character);
 			break;
 		case PLAYER_FALL_STATE:
-			PLAYER.character.anim_index = get_index_animation("Fall", PLAYER.character.model_animations, PLAYER.character.anims_count);
+			PLAYER.character.anim_index = get_index_animation("Fall", PLAYER.character);
 			break;
+		case PLAYER_JUMP_STATE:
+			used_jumps += 1;
+			PLAYER.character.anim_current_frame = -1;
+			PLAYER.character.anim_index = get_index_animation("Jump", PLAYER.character);
+			break;
+		
 	}
 	
 }
@@ -87,7 +103,7 @@ void set_player_state(PlayerStates new_state)
 
 void setup_player()
 {
-	PLAYER.speed = 10.0f;
+	PLAYER.speed = 8.0f;
 	PLAYER.health = 10;
 	PLAYER.velocity = V3ZERO;
 	PLAYER.position = (Vector3){1.3, 5, 11};
@@ -102,13 +118,17 @@ void setup_player()
 
 void reset_player()
 {
+	jump_time = 0;
 	PLAYER.position = (Vector3){1.3, 5, 11};
     	PLAYER.velocity = V3ZERO;
+    	set_player_state(PLAYER_IDLE_STATE);
     	current_floor_index = get_index_on_current_floor_collision();
 }
 
 void reload_player()
 {
+	jump_time = 0;
+	PLAYER.speed = 8.0f;
 	PLAYER.state = 200;   
     	set_player_state(PLAYER_IDLE_STATE);
     	current_floor_index = get_index_on_current_floor_collision();
@@ -128,6 +148,20 @@ void process_player(float delta)
 	else if (IsKeyDown(KEY_S)) PLAYER.direction.y = -1;
 	else PLAYER.direction.y = 0;
 
+	if(IsKeyPressed(KEY_SPACE))
+	{
+		if (used_jumps < 1)
+			if(PLAYER.state != PLAYER_JUMP_STATE){
+				PLAYER.velocity.y = 9;
+				set_player_state(PLAYER_JUMP_STATE);
+			}
+	}
+	
+	if(IsKeyUp(KEY_SPACE))
+		if(PLAYER.state == PLAYER_JUMP_STATE)
+			if (jump_time > 0.01)
+				jump_time = JUMP_MAX_TIME;
+			
 
 	// :player :directions
 	Vector3 forward = Vector3Normalize((Vector3){
@@ -148,12 +182,12 @@ void process_player(float delta)
 		moveDir = Vector3Scale(Vector3Normalize(moveDir), PLAYER.speed);
 		PLAYER.angle = float_move_toward_angle(PLAYER.angle, atan2f(moveDir.x, moveDir.z) * RAD2DEG, delta * 1000);
 		PLAYER.last_move_direction = moveDir;
-		if (PLAYER.state != PLAYER_FALL_STATE) set_player_state(PLAYER_WALK_STATE);
+		if (PLAYER.state != PLAYER_FALL_STATE && PLAYER.state != PLAYER_JUMP_STATE) set_player_state(PLAYER_WALK_STATE);
 	} 
 	else 
 	{
 	    	moveDir = V3ZERO;
-		if (PLAYER.state != PLAYER_FALL_STATE) set_player_state(PLAYER_IDLE_STATE);
+		if (PLAYER.state != PLAYER_FALL_STATE && PLAYER.state != PLAYER_JUMP_STATE) set_player_state(PLAYER_IDLE_STATE);
 	}
 
 
@@ -165,60 +199,72 @@ void process_player(float delta)
 	PLAYER.velocity.z = float_move_toward(PLAYER.velocity.z, moveDir.z, delta * 50);
 
 	Vector3 temp_position = PLAYER.position;
+
 	PLAYER.position = Vector3Add(PLAYER.position, Vector3Scale(PLAYER.velocity, delta));
 
-	unsigned char on_floor = 0;
-	unsigned char on_air = 0;
-	RayCollision ray_temp = {0};
-	unsigned char ponderacion_floor = 0;
 	
-	check_floor:
-
-	for (int x = 0; x < 8; x++)
+	if(PLAYER.state != PLAYER_JUMP_STATE)
 	{
-		ray_temp = GetRayCollisionBox(
-								(Ray){(Vector3){PLAYER.position.x + ray_floor_collision_offsets[x].x, 
-										PLAYER.position.y, 
-										PLAYER.position.z + ray_floor_collision_offsets[x].y 
-										},
-									DOWN_AXIS},
-								scene_floor_collisions.items[current_floor_index]
-							); 
-		if (ray_temp.hit)
+		unsigned char on_floor = 0;
+		unsigned char on_air = 0;
+		RayCollision ray_temp = {0};
+		unsigned char ponderacion_floor = 0;
+		check_floor:
+		for (int x = 0; x < 8; x++)
 		{
-			ponderacion_floor = 1;
-			if (ray_temp.distance <= 0.2f)
+			ray_temp = GetRayCollisionBox(
+									(Ray){(Vector3){PLAYER.position.x + ray_floor_collision_offsets[x].x, 
+											PLAYER.position.y, 
+											PLAYER.position.z + ray_floor_collision_offsets[x].y 
+											},
+										DOWN_AXIS},
+									scene_floor_collisions.items[current_floor_index]
+								); 
+			if (ray_temp.hit)
 			{
-				on_floor = 1;
-				on_air = 0;
-				break;
+				ponderacion_floor = 1;
+				if (ray_temp.distance <= 0.3f)
+				{
+					on_floor = 1;
+					on_air = 0;
+					break;
+				}
+				else
+				{
+					on_air = 1;
+				}
 			}
-			else
-			{
-				on_air = 1;
-			}
+		}
+
+		if (on_floor )
+		{
+			PLAYER.velocity.y = 0;
+			PLAYER.position.y = float_move_toward(PLAYER.position.y, ray_temp.point.y, delta * 10);
+			if (PLAYER.state != PLAYER_WALK_STATE && PLAYER.state != PLAYER_JUMP_STATE) set_player_state(PLAYER_IDLE_STATE);
+		}
+		else if(on_air)
+		{
+
+			PLAYER.velocity.y =  PLAYER.velocity.y - delta * 20;
+			set_player_state(PLAYER_FALL_STATE);
+			current_floor_index = get_index_on_current_floor_collision();
+		}
+
+		if (!ponderacion_floor){
+			current_floor_index = get_index_on_current_floor_collision();
+			goto check_floor;
+		}
+	}
+	else
+	{
+		jump_time += dt;
+		if (jump_time >= JUMP_MAX_TIME)
+		{
+			set_player_state(PLAYER_FALL_STATE);
+			jump_time = 0;
 		}
 	}
 
-	if (on_floor )
-	{
-		PLAYER.velocity.y = 0;
-		PLAYER.position.y = ray_temp.point.y;
-		if (PLAYER.state != PLAYER_WALK_STATE) set_player_state(PLAYER_IDLE_STATE);
-	}
-	else if(on_air)
-	{
-
-		PLAYER.velocity.y = float_move_toward(PLAYER.velocity.y, PLAYER.velocity.y - delta * 25, delta * 400);
-		set_player_state(PLAYER_FALL_STATE);
-		current_floor_index = get_index_on_current_floor_collision();
-	}
-
-	if (!ponderacion_floor){
-		current_floor_index = get_index_on_current_floor_collision();
-		goto check_floor;
-	}
-	
 
 
 
@@ -296,7 +342,18 @@ void draw_player()
 		V3ONE,
 		WHITE
 	);
-	PLAYER.character.anim_current_frame = (PLAYER.character.anim_current_frame + 1)%PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount;
+	if(PLAYER.state == PLAYER_JUMP_STATE)
+	{
+		PLAYER.character.anim_current_frame = (PLAYER.character.anim_current_frame + 1);
+		if(PLAYER.character.anim_current_frame >=  PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount)
+		{
+			PLAYER.character.anim_current_frame =  PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount;
+		}
+	}
+	else
+	{
+		PLAYER.character.anim_current_frame = (PLAYER.character.anim_current_frame + 1)%PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount;
+	}
         UpdateModelAnimation(PLAYER.character.model, PLAYER.character.model_animations[PLAYER.character.anim_index], PLAYER.character.anim_current_frame );
 
        

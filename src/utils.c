@@ -225,11 +225,11 @@ void load_scene_collisions
 
 
 
-int get_index_animation(const char *animation_name, ModelAnimation *model_animations, int animations_count)
+int get_index_animation(const char *animation_name, CharacterModel character)
 {
-	for(unsigned int i = 0; i < animations_count; i++)
+	for(unsigned int i = 0; i < character.anims_count; i++)
 	{
-		if(!strcmp(animation_name, model_animations[i].name))
+		if(!strcmp(animation_name, character.model_animations[i].name))
 		{
 			return i;
 		}
