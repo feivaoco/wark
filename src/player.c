@@ -103,7 +103,7 @@ void set_player_state(PlayerStates new_state)
 
 void setup_player()
 {
-	PLAYER.speed = 8.0f;
+	PLAYER.speed = 7.0f;
 	PLAYER.health = 10;
 	PLAYER.velocity = V3ZERO;
 	PLAYER.position = (Vector3){1.3, 5, 11};
@@ -128,7 +128,7 @@ void reset_player()
 void reload_player()
 {
 	jump_time = 0;
-	PLAYER.speed = 8.0f;
+	PLAYER.speed = 7.0f;
 	PLAYER.state = 200;   
     	set_player_state(PLAYER_IDLE_STATE);
     	current_floor_index = get_index_on_current_floor_collision();

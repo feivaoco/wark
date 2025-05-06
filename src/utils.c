@@ -7,6 +7,7 @@
 #include "time.h"	
 #include <raylib.h>
 #include <raymath.h>
+#include "string.h"
 
 #define UP_AXIS (Vector3){0,1,0}
 #define DOWN_AXIS (Vector3){0,-1,0}
@@ -238,6 +239,9 @@ int get_index_animation(const char *animation_name, CharacterModel character)
 	return 0;
 }
 
+
+
+#include "crate.c"
 
 
 #endif

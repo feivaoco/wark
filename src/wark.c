@@ -8,6 +8,23 @@ GameState* game_state = NULL;
 
 Model model_map_scene = {0};
 
+Vector3 crates_positions[7] = {
+    { -2.00, 0.50, 11.00 },
+    { -2.00, 2.50, 11.00 },
+    { -2.00, 1.50, 11.00 },
+    { 2.00, 2.50, 4.00 },
+    { -1.00, 0.50, 27.00 },
+    { 1.00, 1.50, 21.00 },
+    { 1.00, 0.50, 21.00 },
+};
+
+Vector3 camera_positions[2] = {
+    { 0.33, 2.94, -9.72 },
+    { -1.99, 7.84, 6.19 },
+};
+
+unsigned char index_camera_positions = 0;
+
 
 
 Model model_scene_wall_collisions = {0};
@@ -15,6 +32,7 @@ BoundingBoxSlice scene_wall_collisions = {0};
 Model model_scene_floor_collisions = {0};
 BoundingBoxSlice scene_floor_collisions = {0};
 
+Model model_crate = {0};
 
 float dt;
 
@@ -36,6 +54,7 @@ void load_assets()
     printf("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-\n");
     printf("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-\n");
     printf("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-\n");
+	load_model(&model_crate, "assets/3dmodels/prop_crate.glb", "model_crate");
 	load_model(&model_map_scene, "assets/3dmodels/scene_0/scene_0.glb", "model_map_scene");
 	load_model(&PLAYER.character.model, "assets/3dmodels/char_f.glb", "model_player");
 	load_model_animations(&PLAYER.character, "assets/3dmodels/char_f.glb", "model_player");
@@ -68,10 +87,10 @@ void setup()
 	setup_player();
 
 	CAMERA = (Camera3D){ 0 };
-    CAMERA.position = (Vector3){ -15, 20.0f, 15.0f };  // CAMERA position
+    CAMERA.position = camera_positions[index_camera_positions];  // CAMERA position
     CAMERA.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // CAMERA looking at point
     CAMERA.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // CAMERA up vector (rotation towards target)
-    CAMERA.fovy = 35.0f;                                // CAMERA field-of-view Y
+    CAMERA.fovy = 30.0f;                                // CAMERA field-of-view Y
     CAMERA.projection = CAMERA_PERSPECTIVE;             // CAMERA mode type
 }
 
@@ -80,8 +99,8 @@ void reset()
 	//PLAYER.speed = 10.0f;
 	//PLAYER.angle = 0; 
 	reset_player();
-	CAMERA.position = (Vector3){ -15, 15, 15.0f };
-	CAMERA.fovy = 15.0f;
+	//CAMERA.position = (Vector3){ -15, 15, 15.0f };
+	//CAMERA.fovy = 15.0f;
 
 }
 
@@ -93,6 +112,7 @@ int process()
 	
 	process_player(dt);
 	
+	if(IsKeyPressed(KEY_UP)) {index_camera_positions = (index_camera_positions+1)%2; CAMERA.position = camera_positions[index_camera_positions];}
 
 	CAMERA.target = PLAYER.position;
 	UpdateCamera(&CAMERA, CAMERA_PERSPECTIVE);
@@ -111,6 +131,8 @@ void draw()
 				//MAP
                 
                 DrawModel(model_map_scene, Vector3Zero(), 1.0f, WHITE);
+                for(unsigned char i = 0; i < 7; i++){DrawModel(model_crate, crates_positions[i], 1.0f, WHITE);}
+                
                 //DrawModel(model_scene_floor_collisions, Vector3Zero(), 1.0f, WHITE);
               	//for(int i = 0; i < scene_wall_collisions.len; i++){DrawBoundingBox(scene_wall_collisions.items[i], ORANGE);}
                 //DrawModel(model_scene_wall_collisions, Vector3Zero(), 1.0f, WHITE);
