@@ -14,9 +14,18 @@
 #define V3ONE (Vector3){1,1,1}
 #define V3ZERO (Vector3){0,0,0}
 #define V4ZERO (Vector4){0,0,0,0}
-#define MATRIXZERO (Matrix){0,0,0,1, 0,0,0,1, 0,0,0,1, 0,0,0,1}
 
 
+typedef struct
+{
+	unsigned char enable;
+}SphereCollision;
+
+typedef struct
+{	
+	unsigned char enable;
+	BoundingBox box;
+} CollisionBox;
 
 typedef struct 
 {
@@ -37,6 +46,12 @@ typedef struct
 	BoundingBox *items;
 } BoundingBoxSlice;
 
+typedef struct
+{
+	size_t cap;
+	size_t len;
+	CollisionBox **items;
+} CollisionBoxSlice;
 
 
 
@@ -71,7 +86,21 @@ typedef struct
 	Camera3D camera;
 } GameState;
 
+typedef struct
+{
 
+	unsigned char state;
+	CollisionBox *floor;
+	CollisionBox *wall;
+	Vector3 position;
+}Crate;
+
+typedef struct 
+{
+	size_t cap;
+	size_t len;
+	Crate *items;
+}CrateSlice;
 
 
 void append_Triangle3DSlice(Triangle3DSlice *xs, Triangle3D x)
@@ -113,6 +142,31 @@ void free_BoundingBoxSlice(BoundingBoxSlice *xs){
 	xs->len = 0;
 	xs->cap = 0;
 }
+void append_CollisionBoxSlice(CollisionBoxSlice *xs, CollisionBox *x)
+{
+	if(xs->len >= xs->cap)
+	{
+		if(xs->cap == 0) xs->cap = 256;
+		else xs->cap *= 2;
+		xs->items = realloc(xs->items, xs->cap * sizeof(*xs->items)); 
+	}
+	xs->items[xs->len++] = x;	
+}
+
+void free_CollisionBoxSlice(CollisionBoxSlice *xs){
+	if(xs->items){
+		for(unsigned char i = 0; i < xs -> len; i++)
+		{
+			if(xs->items[i]) free(xs->items[i]);
+			xs->items[i] = NULL;
+		}
+		free(xs->items);
+		xs->items = NULL;
+	}
+	xs->len = 0;
+	xs->cap = 0;
+}
+
 
 void DrawTriangle3DLines(Triangle3D triangle, Color color)
 {
@@ -120,11 +174,6 @@ void DrawTriangle3DLines(Triangle3D triangle, Color color)
 	DrawLine3D(triangle.points[1], triangle.points[2],color);
 	DrawLine3D(triangle.points[2], triangle.points[0],color);
 }
-
-int WIDTH  = 840;
-int HEIGHT = 720;
-int MID_WIDTH = 840/2;
-int MID_HEIGHT = 720/2;
 
 
 float float_rand (float min, float max){ return min + (rand() / (float) RAND_MAX) * ( max - min );}
@@ -138,6 +187,7 @@ float float_move_toward_angle(float in, float to, float delta)
     return in + float_sign(diff) * delta;
 }
 
+int int_rand (int min, int max){ return min + (rand() / (int) RAND_MAX) * ( max - min );}
 int int_sign(int x){if (x>0) return +1; else if (x < 0) return -1; else return 0;}
 int int_move_toward(int in, int to, float delta){ if (abs(to - in) <= delta) return to; else return in + int_sign(to - in) * delta;}
 
@@ -205,20 +255,23 @@ void load_model(Model *model, const char *file_path, const char *text_debug)
 
 void load_scene_collisions
 (
-	Model *walls_model, BoundingBoxSlice *walls_collisions , const char *file_path_walls, const char *text_walls
+	Model *collisions_model, CollisionBoxSlice *collisions_slice , const char *file_path_walls, const char *text_walls
 )
 {
-	free_BoundingBoxSlice(walls_collisions);
+	free_CollisionBoxSlice(collisions_slice);
 	load_model(
-			walls_model, 
+			collisions_model, 
 			file_path_walls, 
 			text_walls
 		);
-	for (int i = 0; i < walls_model->meshCount; i++)
+	for (int i = 0; i < collisions_model->meshCount; i++)
 	{
-		append_BoundingBoxSlice(
-			walls_collisions,
-			GetMeshBoundingBox(walls_model->meshes[i])
+		CollisionBox *collision_box = malloc(sizeof(CollisionBox));
+		*collision_box = (CollisionBox){1,GetMeshBoundingBox(collisions_model->meshes[i])};
+
+		append_CollisionBoxSlice(
+			collisions_slice,
+			collision_box
 		);
 	}
 }
@@ -241,7 +294,20 @@ int get_index_animation(const char *animation_name, CharacterModel character)
 
 
 
-#include "crate.c"
+Matrix Vector3ToMatrix(Vector3 v)
+{
+    Matrix result = { 1.0f, 0.0f, 0.0f, v.x,
+                      0.0f, 1.0f, 0.0f, v.y,
+                      0.0f, 0.0f, 1.0f, v.z,
+                      0.0f, 0.0f, 0.0f, 1.0f };
+
+    return result;
+}
+
+int WIDTH  = 840;
+int HEIGHT = 720;
+int MID_WIDTH = 840/2;
+int MID_HEIGHT = 720/2;
 
 
 #endif

@@ -8,7 +8,7 @@ GameState* game_state = NULL;
 
 Model model_map_scene = {0};
 
-Vector3 crates_positions[7] = {
+Vector3 CratesPositions[7] = {
     { -2.00, 0.50, 11.00 },
     { -2.00, 2.50, 11.00 },
     { -2.00, 1.50, 11.00 },
@@ -28,15 +28,19 @@ unsigned char index_camera_positions = 0;
 
 
 Model model_scene_wall_collisions = {0};
-BoundingBoxSlice scene_wall_collisions = {0};
+CollisionBoxSlice scene_wall_collisions = {0};
 Model model_scene_floor_collisions = {0};
-BoundingBoxSlice scene_floor_collisions = {0};
-
-Model model_crate = {0};
+CollisionBoxSlice scene_floor_collisions = {0};
 
 float dt;
 
+Model model_crate = {0};
+CrateSlice crates = {0};
+
+#include "crate.c"
 #include "player.c"
+
+
 
 void setup_raywindow()
 {	
@@ -84,6 +88,8 @@ void setup()
 
 	load_assets();
 
+	setup_crates(&crates, CratesPositions, 7, &scene_floor_collisions, &scene_wall_collisions);
+
 	setup_player();
 
 	CAMERA = (Camera3D){ 0 };
@@ -96,15 +102,13 @@ void setup()
 
 void reset()
 {
-	//PLAYER.speed = 10.0f;
-	//PLAYER.angle = 0; 
+
 	reset_player();
-	//CAMERA.position = (Vector3){ -15, 15, 15.0f };
-	//CAMERA.fovy = 15.0f;
+	
 
 }
 
-
+int index_box_delete = 0;
 
 int process()
 {
@@ -113,6 +117,14 @@ int process()
 	process_player(dt);
 	
 	if(IsKeyPressed(KEY_UP)) {index_camera_positions = (index_camera_positions+1)%2; CAMERA.position = camera_positions[index_camera_positions];}
+	if(IsKeyPressed(KEY_DOWN))
+	{
+		crates.items[index_box_delete].state = 1;
+		crates.items[index_box_delete].floor->enable = 0;
+		crates.items[index_box_delete].wall->enable = 0;
+		index_box_delete =  index_box_delete + 1 >= crates.len ? 0 : index_box_delete + 1; 
+
+	}
 
 	CAMERA.target = PLAYER.position;
 	UpdateCamera(&CAMERA, CAMERA_PERSPECTIVE);
@@ -131,10 +143,10 @@ void draw()
 				//MAP
                 
                 DrawModel(model_map_scene, Vector3Zero(), 1.0f, WHITE);
-                for(unsigned char i = 0; i < 7; i++){DrawModel(model_crate, crates_positions[i], 1.0f, WHITE);}
+                draw_crates();
                 
+              	//for(int i = 0; i < scene_wall_collisions.len; i++){DrawBoundingBox(scene_wall_collisions.items[i].box, ORANGE);}
                 //DrawModel(model_scene_floor_collisions, Vector3Zero(), 1.0f, WHITE);
-              	//for(int i = 0; i < scene_wall_collisions.len; i++){DrawBoundingBox(scene_wall_collisions.items[i], ORANGE);}
                 //DrawModel(model_scene_wall_collisions, Vector3Zero(), 1.0f, WHITE);
                 
 
@@ -172,6 +184,7 @@ void* wark_main(void* state)
     	//( ￣ー￣)φ__
     	setup_raywindow();
 		load_assets();
+		setup_crates(&crates, CratesPositions, 7, &scene_floor_collisions, &scene_wall_collisions);
 		reload_player();
         printf("[RELOAD] Recarga en Caliente exitosa\n");
     }

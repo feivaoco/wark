@@ -11,8 +11,8 @@ unsigned int current_floor_index = 0;
 unsigned int used_jumps = 0;
 
 Vector2 ray_floor_collision_offsets[] = {
-	{    0,		 .175},
-	{    0, 		-.175},
+	{    0,		 		.175},
+	{    0, 			-.175},
 	{  .175,		   0},
 	{ -.175,		   0},
 	{   .125,		  .125},
@@ -33,22 +33,25 @@ unsigned int get_index_on_current_floor_collision()
 	{
 		for(int i = 0; i < scene_floor_collisions.len; i++)
 		{
-			tmp = GetRayCollisionBox(
-					(Ray){(Vector3){PLAYER.position.x + ray_floor_collision_offsets[x].x, 
-							PLAYER.position.y, 
-							PLAYER.position.z + ray_floor_collision_offsets[x].y 
-							},
-						DOWN_AXIS},
-					scene_floor_collisions.items[i]
-				); 
-			if (tmp.hit)
+			if(scene_floor_collisions.items[i]->enable)
 			{
-				if(tmp.distance < distance_min)
+				tmp = GetRayCollisionBox(
+						(Ray){(Vector3){PLAYER.position.x + ray_floor_collision_offsets[x].x, 
+								PLAYER.position.y, 
+								PLAYER.position.z + ray_floor_collision_offsets[x].y 
+								},
+							DOWN_AXIS},
+						scene_floor_collisions.items[i]->box
+					); 
+				if (tmp.hit)
 				{
-					distance_min = tmp.distance;
-					index_floor = i;
-				}
-			} 
+					if(tmp.distance < distance_min)
+					{
+						distance_min = tmp.distance;
+						index_floor = i;
+					}
+				} 
+			}
 		}
 	}
 	if(index_floor== -99) index_floor = 0;
@@ -210,6 +213,7 @@ void process_player(float delta)
 		RayCollision ray_temp = {0};
 		unsigned char ponderacion_floor = 0;
 		check_floor:
+
 		for (int x = 0; x < 8; x++)
 		{
 			ray_temp = GetRayCollisionBox(
@@ -218,7 +222,7 @@ void process_player(float delta)
 											PLAYER.position.z + ray_floor_collision_offsets[x].y 
 											},
 										DOWN_AXIS},
-									scene_floor_collisions.items[current_floor_index]
+									scene_floor_collisions.items[current_floor_index]->box
 								); 
 			if (ray_temp.hit)
 			{
@@ -238,6 +242,7 @@ void process_player(float delta)
 
 		if (on_floor )
 		{
+			
 			PLAYER.velocity.y = 0;
 			PLAYER.position.y = float_move_toward(PLAYER.position.y, ray_temp.point.y, delta * 10);
 			if (PLAYER.state != PLAYER_WALK_STATE && PLAYER.state != PLAYER_JUMP_STATE) set_player_state(PLAYER_IDLE_STATE);
@@ -270,65 +275,71 @@ void process_player(float delta)
 
 	for(int i = 0; i < scene_wall_collisions.len; i++)
 	{
-		
-		if
-		(
-			CheckCollisionBoxSphere(
-				scene_wall_collisions.items[i], 
-				(Vector3){PLAYER.position.x, PLAYER.position.y + .45, PLAYER.position.z}, .2f 
+		if(scene_wall_collisions.items[i]->enable)
+			if
+			(
+				CheckCollisionBoxSphere(
+					scene_wall_collisions.items[i]->box, 
+					(Vector3){PLAYER.position.x, PLAYER.position.y + .45, PLAYER.position.z}, .2f 
+				)
 			)
-		)
-		{
-
-			// 1
-			PLAYER.position.x = temp_position.x;
-			PLAYER.position.z = temp_position.z;
-			// 2
-			int collide_temp = 0;
-			// 3
-			Vector3 vel_temp = PLAYER.velocity;
-			vel_temp.y = 0;
-			vel_temp.z = 0;
-			temp_position = Vector3Add(PLAYER.position, Vector3Scale(vel_temp, delta));
-			
-			if (PLAYER.state == PLAYER_FALL_STATE)
-		                if (PLAYER.direction.x == 0 && PLAYER.direction.y == 0)
-		                {
-		                        temp_position = Vector3Add(PLAYER.position, Vector3Scale(PLAYER.last_move_direction, delta));
-		                       	
-		                }
-
-	
-
-
-			// 4
-			for(int j = 0; j < scene_wall_collisions.len; j++)
 			{
-				collide_temp = CheckCollisionBoxSphere(
-									scene_wall_collisions.items[j], 
-									(Vector3){temp_position.x, temp_position.y + .45, temp_position.z}, .2f 
-								);
-				if(collide_temp) {break;}
-			}
-			//5
-			if(!collide_temp) {PLAYER.position = temp_position; continue;}
-			//6
-			vel_temp.z = PLAYER.velocity.z;
-			vel_temp.x = 0;
-			temp_position = Vector3Add(PLAYER.position, Vector3Scale(vel_temp, delta));
-			//7
-			for(int j = 0; j < scene_wall_collisions.len; j++)
-			{
-				collide_temp = 	CheckCollisionBoxSphere(
-									scene_wall_collisions.items[j], 
-									(Vector3){temp_position.x, temp_position.y + .45, temp_position.z}, .2f 
-								);
-				if(collide_temp) {break;}
-			}
-			//8
-			if(!collide_temp) {PLAYER.position = temp_position;}
 
-		}
+				// 1
+				PLAYER.position.x = temp_position.x;
+				PLAYER.position.z = temp_position.z;
+				// 2
+				int collide_temp = 0;
+				// 3
+				Vector3 vel_temp = PLAYER.velocity;
+				vel_temp.y = 0;
+				vel_temp.z = 0;
+				temp_position = Vector3Add(PLAYER.position, Vector3Scale(vel_temp, delta));
+				
+				if (PLAYER.state == PLAYER_FALL_STATE)
+			                if (PLAYER.direction.x == 0 && PLAYER.direction.y == 0)
+			                {
+			                        temp_position = Vector3Add(PLAYER.position, Vector3Scale(PLAYER.last_move_direction, delta));
+			                       	
+			                }
+
+		
+
+
+				// 4
+				for(int j = 0; j < scene_wall_collisions.len; j++)
+				{	
+					if(scene_wall_collisions.items[i]->enable)
+					{
+						collide_temp = CheckCollisionBoxSphere(
+											scene_wall_collisions.items[j]->box, 
+											(Vector3){temp_position.x, temp_position.y + .45, temp_position.z}, .2f 
+										);
+						if(collide_temp) {break;}
+					}
+				}
+				//5
+				if(!collide_temp) {PLAYER.position = temp_position; continue;}
+				//6
+				vel_temp.z = PLAYER.velocity.z;
+				vel_temp.x = 0;
+				temp_position = Vector3Add(PLAYER.position, Vector3Scale(vel_temp, delta));
+				//7
+				for(int j = 0; j < scene_wall_collisions.len; j++)
+				{
+					if(scene_wall_collisions.items[i]->enable)
+					{
+						collide_temp = CheckCollisionBoxSphere(
+											scene_wall_collisions.items[j]->box, 
+											(Vector3){temp_position.x, temp_position.y + .45, temp_position.z}, .2f 
+										);
+						if(collide_temp) {break;}
+					}
+				}
+				//8
+				if(!collide_temp) {PLAYER.position = temp_position;}
+
+			}
 	}
 }
 
