@@ -88,7 +88,7 @@ typedef struct
 
 typedef struct
 {
-
+	CharacterModel *character;
 	unsigned char state;
 	CollisionBox *floor;
 	CollisionBox *wall;

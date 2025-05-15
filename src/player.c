@@ -109,7 +109,7 @@ void setup_player()
 	PLAYER.speed = 7.0f;
 	PLAYER.health = 10;
 	PLAYER.velocity = V3ZERO;
-	PLAYER.position = (Vector3){1.3, 5, 11};
+	PLAYER.position = (Vector3){1.3, 8, 11};
 	PLAYER.direction = Vector2Zero();
 	PLAYER.angle = 0;
 
@@ -122,7 +122,7 @@ void setup_player()
 void reset_player()
 {
 	jump_time = 0;
-	PLAYER.position = (Vector3){1.3, 5, 11};
+	PLAYER.position = (Vector3){1.3, 8, 11};
     	PLAYER.velocity = V3ZERO;
     	set_player_state(PLAYER_IDLE_STATE);
     	current_floor_index = get_index_on_current_floor_collision();
@@ -242,7 +242,7 @@ void process_player(float delta)
 
 		if (on_floor )
 		{
-			
+
 			PLAYER.velocity.y = 0;
 			PLAYER.position.y = float_move_toward(PLAYER.position.y, ray_temp.point.y, delta * 10);
 			if (PLAYER.state != PLAYER_WALK_STATE && PLAYER.state != PLAYER_JUMP_STATE) set_player_state(PLAYER_IDLE_STATE);

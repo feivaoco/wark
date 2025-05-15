@@ -8,7 +8,11 @@ GameState* game_state = NULL;
 
 Model model_map_scene = {0};
 
-Vector3 CratesPositions[7] = {
+Vector3 camera_positions[2] = {
+    { 0.33, 2.94, -9.72 },
+    { -1.99, 7.84, 6.19 },
+};
+Vector3 CratesPositions[16] = {
     { -2.00, 0.50, 11.00 },
     { -2.00, 2.50, 11.00 },
     { -2.00, 1.50, 11.00 },
@@ -16,11 +20,15 @@ Vector3 CratesPositions[7] = {
     { -1.00, 0.50, 27.00 },
     { 1.00, 1.50, 21.00 },
     { 1.00, 0.50, 21.00 },
-};
-
-Vector3 camera_positions[2] = {
-    { 0.33, 2.94, -9.72 },
-    { -1.99, 7.84, 6.19 },
+    { -1.00, 0.50, 29.00 },
+    { -0.50, 0.50, 38.50 },
+    { 0.50, 0.50, 38.50 },
+    { -0.50, 1.50, 38.50 },
+    { 0.50, 1.50, 38.50 },
+    { -0.50, 2.50, 38.50 },
+    { 0.50, 2.50, 38.50 },
+    { -0.50, 3.50, 38.50 },
+    { 0.50, 3.50, 38.50 },
 };
 
 unsigned char index_camera_positions = 0;
@@ -34,7 +42,8 @@ CollisionBoxSlice scene_floor_collisions = {0};
 
 float dt;
 
-Model model_crate = {0};
+Model model_crate_collisions = {0};
+Model model_crate_character = {0};
 CrateSlice crates = {0};
 
 #include "crate.c"
@@ -58,7 +67,10 @@ void load_assets()
     printf("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-\n");
     printf("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-\n");
     printf("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-\n");
-	load_model(&model_crate, "assets/3dmodels/prop_crate.glb", "model_crate");
+	
+	load_model(&model_crate_collisions, "assets/3dmodels/props/crate_collisions.glb", "model_crate_collisions");
+	
+
 	load_model(&model_map_scene, "assets/3dmodels/scene_0/scene_0.glb", "model_map_scene");
 	load_model(&PLAYER.character.model, "assets/3dmodels/char_f.glb", "model_player");
 	load_model_animations(&PLAYER.character, "assets/3dmodels/char_f.glb", "model_player");
@@ -88,7 +100,7 @@ void setup()
 
 	load_assets();
 
-	setup_crates(&crates, CratesPositions, 7, &scene_floor_collisions, &scene_wall_collisions);
+	setup_crates(&crates, CratesPositions, 16, &scene_floor_collisions, &scene_wall_collisions);
 
 	setup_player();
 
@@ -184,7 +196,7 @@ void* wark_main(void* state)
     	//( ￣ー￣)φ__
     	setup_raywindow();
 		load_assets();
-		setup_crates(&crates, CratesPositions, 7, &scene_floor_collisions, &scene_wall_collisions);
+		setup_crates(&crates, CratesPositions, 16, &scene_floor_collisions, &scene_wall_collisions);
 		reload_player();
         printf("[RELOAD] Recarga en Caliente exitosa\n");
     }
