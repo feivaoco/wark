@@ -5,10 +5,13 @@ typedef enum
 	PLAYER_WALK_STATE = 1,
 	PLAYER_FALL_STATE = 2,
 	PLAYER_JUMP_STATE = 3,
+	PLAYER_ATTACK_STATE = 4,
+
 } PlayerStates;
 
 unsigned int current_floor_index = 0;
-unsigned int used_jumps = 0;
+unsigned char used_jumps = 0;
+unsigned char max_jumps = 1;
 
 Vector2 ray_floor_collision_offsets[] = {
 	{    0,		 		.175},
@@ -68,6 +71,8 @@ const char* get_current_player_state()
 			return "WALK";
 		case PLAYER_FALL_STATE:
 			return "FALL";
+		case PLAYER_ATTACK_STATE:
+			return "ATTACK";
 	}
 	return "NULL";
 }
@@ -83,11 +88,11 @@ void set_player_state(PlayerStates new_state)
 	switch(new_state)
 	{
 		case PLAYER_IDLE_STATE:	
+			max_jumps = 1; 
 			used_jumps = 0;
 			PLAYER.character.anim_index = get_index_animation("Idle", PLAYER.character);
 			break;
 		case PLAYER_WALK_STATE:
-			
 			PLAYER.character.anim_index = get_index_animation("Walk", PLAYER.character);
 			break;
 		case PLAYER_FALL_STATE:
@@ -98,6 +103,11 @@ void set_player_state(PlayerStates new_state)
 			PLAYER.character.anim_current_frame = -1;
 			PLAYER.character.anim_index = get_index_animation("Jump", PLAYER.character);
 			break;
+		case PLAYER_ATTACK_STATE:
+			max_jumps = 2;
+			PLAYER.character.anim_current_frame = 0;
+			PLAYER.character.anim_index = get_index_animation("RESET", PLAYER.character);
+			break;
 		
 	}
 	
@@ -106,6 +116,7 @@ void set_player_state(PlayerStates new_state)
 
 void setup_player()
 {
+
 	PLAYER.speed = 7.0f;
 	PLAYER.health = 10;
 	PLAYER.velocity = V3ZERO;
@@ -121,6 +132,7 @@ void setup_player()
 
 void reset_player()
 {
+	max_jumps = 1;
 	jump_time = 0;
 	PLAYER.position = (Vector3){1.3, 8, 11};
     	PLAYER.velocity = V3ZERO;
@@ -139,21 +151,13 @@ void reload_player()
 
 void process_player(float delta)
 {
-	
-
-
 	// :player :input
-	if (IsKeyDown(KEY_A)) PLAYER.direction.x = -1;
-	else if (IsKeyDown(KEY_D)) PLAYER.direction.x = 1;
-	else PLAYER.direction.x = 0;
-	
-	if (IsKeyDown(KEY_W)) PLAYER.direction.y = 1;
-	else if (IsKeyDown(KEY_S)) PLAYER.direction.y = -1;
-	else PLAYER.direction.y = 0;
+		
+	if (IsKeyPressed(KEY_I)) set_player_state(PLAYER_ATTACK_STATE);
 
 	if(IsKeyPressed(KEY_SPACE))
 	{
-		if (used_jumps < 1)
+		if (used_jumps < max_jumps)
 			if(PLAYER.state != PLAYER_JUMP_STATE){
 				PLAYER.velocity.y = 9;
 				set_player_state(PLAYER_JUMP_STATE);
@@ -164,6 +168,14 @@ void process_player(float delta)
 		if(PLAYER.state == PLAYER_JUMP_STATE)
 			if (jump_time > 0.01)
 				jump_time = JUMP_MAX_TIME;
+
+	if (IsKeyDown(KEY_A)) PLAYER.direction.x = -1;
+	else if (IsKeyDown(KEY_D)) PLAYER.direction.x = 1;
+	else PLAYER.direction.x = 0;
+	
+	if (IsKeyDown(KEY_W)) PLAYER.direction.y = 1;
+	else if (IsKeyDown(KEY_S)) PLAYER.direction.y = -1;
+	else PLAYER.direction.y = 0;
 			
 
 	// :player :directions
@@ -185,12 +197,12 @@ void process_player(float delta)
 		moveDir = Vector3Scale(Vector3Normalize(moveDir), PLAYER.speed);
 		PLAYER.angle = float_move_toward_angle(PLAYER.angle, atan2f(moveDir.x, moveDir.z) * RAD2DEG, delta * 1000);
 		PLAYER.last_move_direction = moveDir;
-		if (PLAYER.state != PLAYER_FALL_STATE && PLAYER.state != PLAYER_JUMP_STATE) set_player_state(PLAYER_WALK_STATE);
+		if (PLAYER.state == PLAYER_IDLE_STATE ) set_player_state(PLAYER_WALK_STATE);
 	} 
 	else 
 	{
-	    	moveDir = V3ZERO;
-		if (PLAYER.state != PLAYER_FALL_STATE && PLAYER.state != PLAYER_JUMP_STATE) set_player_state(PLAYER_IDLE_STATE);
+	    moveDir = V3ZERO;
+		if (PLAYER.state == PLAYER_WALK_STATE) set_player_state(PLAYER_IDLE_STATE);
 	}
 
 
@@ -245,7 +257,7 @@ void process_player(float delta)
 
 			PLAYER.velocity.y = 0;
 			PLAYER.position.y = float_move_toward(PLAYER.position.y, ray_temp.point.y, delta * 10);
-			if (PLAYER.state != PLAYER_WALK_STATE && PLAYER.state != PLAYER_JUMP_STATE) set_player_state(PLAYER_IDLE_STATE);
+			if (PLAYER.state == PLAYER_FALL_STATE) set_player_state(PLAYER_IDLE_STATE);
 		}
 		else if(on_air)
 		{
@@ -353,19 +365,23 @@ void draw_player()
 		V3ONE,
 		WHITE
 	);
-	if(PLAYER.state == PLAYER_JUMP_STATE)
+	
+	
+	switch(PLAYER.state)
 	{
-		PLAYER.character.anim_current_frame = (PLAYER.character.anim_current_frame + 1);
-		if(PLAYER.character.anim_current_frame >=  PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount)
-		{
-			PLAYER.character.anim_current_frame =  PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount;
-		}
+		case PLAYER_JUMP_STATE: case PLAYER_ATTACK_STATE:
+			PLAYER.character.anim_current_frame = (PLAYER.character.anim_current_frame + 1);
+			if(PLAYER.character.anim_current_frame >=  PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount)
+			{
+				PLAYER.character.anim_current_frame =  PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount;
+			}
+			break;
+		default:
+			PLAYER.character.anim_current_frame = (PLAYER.character.anim_current_frame + 1)%PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount;
+
+
 	}
-	else
-	{
-		PLAYER.character.anim_current_frame = (PLAYER.character.anim_current_frame + 1)%PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount;
-	}
-        UpdateModelAnimation(PLAYER.character.model, PLAYER.character.model_animations[PLAYER.character.anim_index], PLAYER.character.anim_current_frame );
+    UpdateModelAnimation(PLAYER.character.model, PLAYER.character.model_animations[PLAYER.character.anim_index], PLAYER.character.anim_current_frame );
 
        
 }

@@ -72,9 +72,9 @@ void setup_crates(CrateSlice *crates_slice, Vector3 crates_positions[], unsigned
 		append_CollisionBoxSlice(scene_floor_collisions_box, floor_collision_box_p);
 		append_CollisionBoxSlice(scene_wall_collisions_box, wall_collision_box_p);
 
-		printf("[INFO] Floor Pointer solo %p\n", floor_collision_box_p);
-		printf("[INFO] Floor Pointer en Crates %p\n", crates.items[i].floor);
-		printf("[INFO] Floor Pointer en Scene Floor %p\n", scene_floor_collisions.items[scene_floor_collisions.len-1]);
+		//printf("[INFO] Floor Pointer solo %p\n", floor_collision_box_p);
+		//printf("[INFO] Floor Pointer en Crates %p\n", crates.items[i].floor);
+		//printf("[INFO] Floor Pointer en Scene Floor %p\n", scene_floor_collisions.items[scene_floor_collisions.len-1]);
 
 	}
 
