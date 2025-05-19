@@ -100,13 +100,13 @@ void set_player_state(PlayerStates new_state)
 			break;
 		case PLAYER_JUMP_STATE:
 			used_jumps += 1;
-			PLAYER.character.anim_current_frame = -1;
+			PLAYER.character.anim_current_frame = 0;
 			PLAYER.character.anim_index = get_index_animation("Jump", PLAYER.character);
 			break;
 		case PLAYER_ATTACK_STATE:
 			max_jumps = 2;
 			PLAYER.character.anim_current_frame = 0;
-			PLAYER.character.anim_index = get_index_animation("RESET", PLAYER.character);
+			PLAYER.character.anim_index = get_index_animation("Attack", PLAYER.character);
 			break;
 		
 	}
@@ -373,7 +373,7 @@ void draw_player()
 			PLAYER.character.anim_current_frame = (PLAYER.character.anim_current_frame + 1);
 			if(PLAYER.character.anim_current_frame >=  PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount)
 			{
-				PLAYER.character.anim_current_frame =  PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount;
+				PLAYER.character.anim_current_frame =  PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount - 1;
 			}
 			break;
 		default:

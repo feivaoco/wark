@@ -92,9 +92,9 @@ void draw_crates()
 				break;
 			case 1:
 				crates.items[i].character->anim_current_frame = crates.items[i].character->anim_current_frame + 1;
-				if(crates.items[i].character->anim_current_frame >  crates.items[i].character->model_animations[crates.items[i].character->anim_index].frameCount-5)
+				if(crates.items[i].character->anim_current_frame >=  crates.items[i].character->model_animations[crates.items[i].character->anim_index].frameCount-5)
 				{
-					crates.items[i].character->anim_current_frame =  crates.items[i].character->model_animations[crates.items[i].character->anim_index].frameCount-5;
+					crates.items[i].character->anim_current_frame =  crates.items[i].character->model_animations[crates.items[i].character->anim_index].frameCount-6;
 					crates.items[i].state = 2;
 				}
 				else
