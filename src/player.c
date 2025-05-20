@@ -1,4 +1,7 @@
-#define JUMP_MAX_TIME 0.11
+#define JUMP_MAX_TIME 0.05
+#define ATTACK_MAX_TIME .45
+
+
 typedef enum
 {
 	PLAYER_IDLE_STATE = 0,
@@ -12,19 +15,21 @@ typedef enum
 unsigned int current_floor_index = 0;
 unsigned char used_jumps = 0;
 unsigned char max_jumps = 1;
+float rotation_attack_model = 0;
 
 Vector2 ray_floor_collision_offsets[] = {
-	{    0,		 		.175},
-	{    0, 			-.175},
-	{  .175,		   0},
-	{ -.175,		   0},
-	{   .125,		  .125},
-	{  -.125,		 -.125},
-	{   .125,		 -.125},
-	{  -.125,		  .125}
+	{    0,		 		.19},
+	{    0, 			-.19},
+	{  .19,		   0},
+	{ -.19,		   0},
+	{   .14,		  .14},
+	{  -.14,		 -.14},
+	{   .14,		 -.14},
+	{  -.14,		  .14}
 };	
 
 float jump_time = 0;
+float attack_time = 0;
 
 unsigned int get_index_on_current_floor_collision()
 {
@@ -105,8 +110,11 @@ void set_player_state(PlayerStates new_state)
 			break;
 		case PLAYER_ATTACK_STATE:
 			max_jumps = 2;
+			PLAYER.angle = atan2f(PLAYER.last_move_direction.x, PLAYER.last_move_direction.z) * RAD2DEG;
 			PLAYER.character.anim_current_frame = 0;
 			PLAYER.character.anim_index = get_index_animation("Attack", PLAYER.character);
+			PLAYER.velocity.x = PLAYER.last_move_direction.x * 1.3;
+			PLAYER.velocity.z =  PLAYER.last_move_direction.z * 1.3;
 			break;
 		
 	}
@@ -143,6 +151,7 @@ void reset_player()
 void reload_player()
 {
 	jump_time = 0;
+	attack_time = 0;
 	PLAYER.speed = 7.0f;
 	PLAYER.state = 200;   
     	set_player_state(PLAYER_IDLE_STATE);
@@ -153,7 +162,12 @@ void process_player(float delta)
 {
 	// :player :input
 		
-	if (IsKeyPressed(KEY_I)) set_player_state(PLAYER_ATTACK_STATE);
+	if (IsKeyPressed(KEY_I)) 
+	{
+		if (PLAYER.state != PLAYER_ATTACK_STATE)
+			set_player_state(PLAYER_ATTACK_STATE);
+	}
+
 
 	if(IsKeyPressed(KEY_SPACE))
 	{
@@ -161,6 +175,7 @@ void process_player(float delta)
 			if(PLAYER.state != PLAYER_JUMP_STATE){
 				PLAYER.velocity.y = 9;
 				set_player_state(PLAYER_JUMP_STATE);
+				attack_time = 0;
 			}
 	}
 	
@@ -169,13 +184,16 @@ void process_player(float delta)
 			if (jump_time > 0.01)
 				jump_time = JUMP_MAX_TIME;
 
-	if (IsKeyDown(KEY_A)) PLAYER.direction.x = -1;
-	else if (IsKeyDown(KEY_D)) PLAYER.direction.x = 1;
-	else PLAYER.direction.x = 0;
-	
-	if (IsKeyDown(KEY_W)) PLAYER.direction.y = 1;
-	else if (IsKeyDown(KEY_S)) PLAYER.direction.y = -1;
-	else PLAYER.direction.y = 0;
+	if (PLAYER.state != PLAYER_ATTACK_STATE)
+	{
+		if (IsKeyDown(KEY_A)) PLAYER.direction.x = -1;
+		else if (IsKeyDown(KEY_D)) PLAYER.direction.x = 1;
+		else PLAYER.direction.x = 0;
+		
+		if (IsKeyDown(KEY_W)) PLAYER.direction.y = 1;
+		else if (IsKeyDown(KEY_S)) PLAYER.direction.y = -1;
+		else PLAYER.direction.y = 0;
+	}
 			
 
 	// :player :directions
@@ -201,7 +219,7 @@ void process_player(float delta)
 	} 
 	else 
 	{
-	    moveDir = V3ZERO;
+	   	moveDir = V3ZERO;
 		if (PLAYER.state == PLAYER_WALK_STATE) set_player_state(PLAYER_IDLE_STATE);
 	}
 
@@ -210,14 +228,35 @@ void process_player(float delta)
 
 
 	// :player :move
-	PLAYER.velocity.x = float_move_toward(PLAYER.velocity.x, moveDir.x, delta * 50);
-	PLAYER.velocity.z = float_move_toward(PLAYER.velocity.z, moveDir.z, delta * 50);
+
+	if (PLAYER.state == PLAYER_ATTACK_STATE)
+	{	
+		
+		
+		attack_time += delta;
+		PLAYER.velocity.x = float_move_toward(PLAYER.velocity.x, PLAYER.last_move_direction.x * 3, delta * 70);
+		PLAYER.velocity.z = float_move_toward(PLAYER.velocity.z, PLAYER.last_move_direction.z * 3, delta * 70);
+		if (attack_time >= ATTACK_MAX_TIME)
+		{
+			set_player_state(PLAYER_IDLE_STATE);
+			attack_time = 0;
+		}
+	}
+	else
+	{
+		PLAYER.velocity.x = float_move_toward(PLAYER.velocity.x, moveDir.x, delta * 50);
+		PLAYER.velocity.z = float_move_toward(PLAYER.velocity.z, moveDir.z, delta * 50);
+
+	}
+
 
 	Vector3 temp_position = PLAYER.position;
 
 	PLAYER.position = Vector3Add(PLAYER.position, Vector3Scale(PLAYER.velocity, delta));
 
 	
+	
+
 	if(PLAYER.state != PLAYER_JUMP_STATE)
 	{
 		unsigned char on_floor = 0;
@@ -262,8 +301,13 @@ void process_player(float delta)
 		else if(on_air)
 		{
 
-			PLAYER.velocity.y =  PLAYER.velocity.y - delta * 20;
-			set_player_state(PLAYER_FALL_STATE);
+			if (PLAYER.state != PLAYER_ATTACK_STATE)
+			{
+
+				PLAYER.velocity.y =  PLAYER.velocity.y - delta * 20;
+				set_player_state(PLAYER_FALL_STATE);
+			} 
+
 			current_floor_index = get_index_on_current_floor_collision();
 		}
 
@@ -274,7 +318,7 @@ void process_player(float delta)
 	}
 	else
 	{
-		jump_time += dt;
+		jump_time += delta;
 		if (jump_time >= JUMP_MAX_TIME)
 		{
 			set_player_state(PLAYER_FALL_STATE);
@@ -282,7 +326,7 @@ void process_player(float delta)
 		}
 	}
 
-
+	
 
 
 	for(int i = 0; i < scene_wall_collisions.len; i++)
@@ -366,22 +410,34 @@ void draw_player()
 		WHITE
 	);
 	
-	
 	switch(PLAYER.state)
 	{
-		case PLAYER_JUMP_STATE: case PLAYER_ATTACK_STATE:
+		case PLAYER_ATTACK_STATE:	
+			rotation_attack_model += dt * 1000;
+			if (rotation_attack_model > 360.0f) rotation_attack_model -= 360.0f;
+			Matrix matRotationY = MatrixRotateY(DEG2RAD * PLAYER.angle);     
+			Matrix matRotationZ = MatrixRotateZ(DEG2RAD * rotation_attack_model); 
+			Matrix matTranslation = MatrixTranslate(PLAYER.position.x, PLAYER.position.y + 0.5f, PLAYER.position.z - 0.052f);
+			Matrix transform = MatrixMultiply(matRotationZ, matRotationY);
+			transform = MatrixMultiply(transform, matTranslation);
+			rlDisableBackfaceCulling();  
+			DrawMesh(model_player_attack.meshes[0], model_player_attack.materials[1], transform);
+			rlEnableBackfaceCulling();
+
+		case PLAYER_JUMP_STATE: 
 			PLAYER.character.anim_current_frame = (PLAYER.character.anim_current_frame + 1);
 			if(PLAYER.character.anim_current_frame >=  PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount)
 			{
 				PLAYER.character.anim_current_frame =  PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount - 1;
 			}
 			break;
+		
 		default:
 			PLAYER.character.anim_current_frame = (PLAYER.character.anim_current_frame + 1)%PLAYER.character.model_animations[PLAYER.character.anim_index].frameCount;
 
 
 	}
-    UpdateModelAnimation(PLAYER.character.model, PLAYER.character.model_animations[PLAYER.character.anim_index], PLAYER.character.anim_current_frame );
+	UpdateModelAnimation(PLAYER.character.model, PLAYER.character.model_animations[PLAYER.character.anim_index], PLAYER.character.anim_current_frame );
 
        
 }

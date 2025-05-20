@@ -46,6 +46,8 @@ Model model_crate_collisions = {0};
 Model model_crate_character = {0};
 CrateSlice crates = {0};
 
+Model model_player_attack = {0};
+
 #include "crate.c"
 #include "player.c"
 
@@ -74,6 +76,8 @@ void load_assets()
 	load_model(&model_map_scene, "assets/3dmodels/scene_0/scene_0.glb", "model_map_scene");
 	load_model(&PLAYER.character.model, "assets/3dmodels/char_f.glb", "model_player");
 	load_model_animations(&PLAYER.character, "assets/3dmodels/char_f.glb", "model_player");
+
+	load_model(&model_player_attack, "assets/3dmodels/char_attack.glb", "model_player_attack");
 
 	load_scene_collisions(
 		&model_scene_wall_collisions, 
@@ -166,8 +170,8 @@ void draw()
                 // PLAYER
                 draw_player();
 
-                //for(int i = 0; i < 8; i++)DrawRay((Ray){(Vector3){PLAYER.position.x + ray_floor_collision_offsets[i].x, PLAYER.position.y + 1, PLAYER.position.z + ray_floor_collision_offsets[i].y },DOWN_AXIS}, GREEN);
-				//DrawSphere((Vector3){PLAYER.position.x, PLAYER.position.y + .45, PLAYER.position.z}, .2f , RED );     
+                for(int i = 0; i < 8; i++)DrawRay((Ray){(Vector3){PLAYER.position.x + ray_floor_collision_offsets[i].x, PLAYER.position.y + 1, PLAYER.position.z + ray_floor_collision_offsets[i].y },DOWN_AXIS}, GREEN);
+				DrawSphere((Vector3){PLAYER.position.x, PLAYER.position.y + .45, PLAYER.position.z}, .2f  , RED );     
 
 				       
                 
