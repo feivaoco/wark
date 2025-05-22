@@ -1,7 +1,7 @@
 #define JUMP_MAX_TIME 0.05
-#define ATTACK_MAX_TIME .45
-
-
+#define ATTACK_MAX_TIME .3
+#define ATTACK_COOLDOWN_MAX .6
+#define SHIELD_SIZE .5
 typedef enum
 {
 	PLAYER_IDLE_STATE = 0,
@@ -30,6 +30,16 @@ Vector2 ray_floor_collision_offsets[] = {
 
 float jump_time = 0;
 float attack_time = 0;
+float attack_cooldown = ATTACK_COOLDOWN_MAX;
+
+int bone_object_index = 0;
+Vector3 position_shield_player = {0};
+
+CollisionBox shield_collision = {0};
+
+
+
+
 
 unsigned int get_index_on_current_floor_collision()
 {
@@ -109,6 +119,8 @@ void set_player_state(PlayerStates new_state)
 			PLAYER.character.anim_index = get_index_animation("Jump", PLAYER.character);
 			break;
 		case PLAYER_ATTACK_STATE:
+			attack_cooldown = 0;
+			shield_collision.enable = 1;
 			max_jumps = 2;
 			PLAYER.angle = atan2f(PLAYER.last_move_direction.x, PLAYER.last_move_direction.z) * RAD2DEG;
 			PLAYER.character.anim_current_frame = 0;
@@ -125,6 +137,11 @@ void set_player_state(PlayerStates new_state)
 void setup_player()
 {
 
+
+
+	bone_object_index = get_bone_index(PLAYER.character.model_animations, "Object");
+
+
 	PLAYER.speed = 7.0f;
 	PLAYER.health = 10;
 	PLAYER.velocity = V3ZERO;
@@ -134,39 +151,61 @@ void setup_player()
 
 	PLAYER.state = 200;
 
+	attack_time = 0;
+	attack_cooldown = ATTACK_COOLDOWN_MAX;
+
 	set_player_state(PLAYER_IDLE_STATE);
 	current_floor_index = get_index_on_current_floor_collision();
+
+	
+	
+	shield_collision.enable = 0;
+
 }
 
 void reset_player()
 {
 	max_jumps = 1;
 	jump_time = 0;
+	attack_time = 0;
+	attack_cooldown = ATTACK_COOLDOWN_MAX;
+
 	PLAYER.position = (Vector3){1.3, 8, 11};
     	PLAYER.velocity = V3ZERO;
     	set_player_state(PLAYER_IDLE_STATE);
     	current_floor_index = get_index_on_current_floor_collision();
+
+
 }
 
 void reload_player()
 {
 	jump_time = 0;
 	attack_time = 0;
+	max_jumps = 1;
+
 	PLAYER.speed = 7.0f;
 	PLAYER.state = 200;   
+
+	PLAYER.velocity = V3ZERO;
+
     	set_player_state(PLAYER_IDLE_STATE);
     	current_floor_index = get_index_on_current_floor_collision();
 }
 
 void process_player(float delta)
 {
+	attack_cooldown = attack_cooldown >= ATTACK_COOLDOWN_MAX ? ATTACK_COOLDOWN_MAX : attack_cooldown + delta;
+	
+	
+
+
 	// :player :input
-		
 	if (IsKeyPressed(KEY_I)) 
-	{
 		if (PLAYER.state != PLAYER_ATTACK_STATE)
-			set_player_state(PLAYER_ATTACK_STATE);
-	}
+			if (attack_cooldown >= ATTACK_COOLDOWN_MAX)
+				set_player_state(PLAYER_ATTACK_STATE);
+			
 
 
 	if(IsKeyPressed(KEY_SPACE))
@@ -238,8 +277,9 @@ void process_player(float delta)
 		PLAYER.velocity.z = float_move_toward(PLAYER.velocity.z, PLAYER.last_move_direction.z * 3, delta * 70);
 		if (attack_time >= ATTACK_MAX_TIME)
 		{
-			set_player_state(PLAYER_IDLE_STATE);
+			set_player_state(PLAYER_FALL_STATE);
 			attack_time = 0;
+			shield_collision.enable = 0;
 		}
 	}
 	else
@@ -306,7 +346,11 @@ void process_player(float delta)
 
 				PLAYER.velocity.y =  PLAYER.velocity.y - delta * 20;
 				set_player_state(PLAYER_FALL_STATE);
-			} 
+			}
+			else
+			{
+				PLAYER.velocity.y = float_move_toward(PLAYER.velocity.y , 0, delta * 10);
+			}
 
 			current_floor_index = get_index_on_current_floor_collision();
 		}
@@ -397,6 +441,31 @@ void process_player(float delta)
 
 			}
 	}
+
+	
+    	
+
+	
+
+	
+
+	float angle_rad = DEG2RAD * PLAYER.angle;
+	Vector3 forward_player = { sinf(angle_rad), 0, cosf(angle_rad) };
+	position_shield_player = Vector3Add(PLAYER.position, Vector3Scale(forward_player, 0.3f));
+	position_shield_player.y += .5;
+
+	shield_collision.box =  (BoundingBox){
+	    .min = (Vector3){ position_shield_player.x - SHIELD_SIZE, position_shield_player.y - SHIELD_SIZE, position_shield_player.z - SHIELD_SIZE },
+	    .max = (Vector3){ position_shield_player.x + SHIELD_SIZE, position_shield_player.y + SHIELD_SIZE, position_shield_player.z + SHIELD_SIZE }
+	};
+
+	if(shield_collision.enable)
+		for(size_t i = 0; i < crates.len; i++)
+			if(crates.items[i].state == 0)
+				if(CheckCollisionBoxes(crates.items[i].wall->box, shield_collision.box))
+					destroy_crate(&crates.items[i]);
+
+
 }
 
 void draw_player()
@@ -409,10 +478,17 @@ void draw_player()
 		V3ONE,
 		WHITE
 	);
+
+	
+	//debug collision shield box
+	//DrawBoundingBox(shield_collision.box, RED);
 	
 	switch(PLAYER.state)
 	{
 		case PLAYER_ATTACK_STATE:	
+
+
+
 			rotation_attack_model += dt * 1000;
 			if (rotation_attack_model > 360.0f) rotation_attack_model -= 360.0f;
 			Matrix matRotationY = MatrixRotateY(DEG2RAD * PLAYER.angle);     

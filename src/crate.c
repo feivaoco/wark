@@ -32,14 +32,15 @@ void free_CrateSlice(CrateSlice *xs){
 
 
 
+
+
+
 void setup_crates(CrateSlice *crates_slice, Vector3 crates_positions[], unsigned char crates_count, CollisionBoxSlice *scene_floor_collisions_box, CollisionBoxSlice *scene_wall_collisions_box)
 {
 	free_CrateSlice(crates_slice);
 	for(unsigned char i = 0; i < crates_count; i++)
 	{	
 		Vector3 position = crates_positions[i];
-
-
 		BoundingBox bounding_box_floor = (BoundingBox){
 														Vector3Add(GetMeshBoundingBox(model_crate_collisions.meshes[1]).min, position), 
 														Vector3Add(GetMeshBoundingBox(model_crate_collisions.meshes[1]).max, position)
@@ -52,10 +53,8 @@ void setup_crates(CrateSlice *crates_slice, Vector3 crates_positions[], unsigned
 		CollisionBox *floor_collision_box_p = malloc(sizeof(CollisionBox));
 		*floor_collision_box_p = (CollisionBox){1, bounding_box_floor};
 
-
 		CollisionBox *wall_collision_box_p = malloc(sizeof(CollisionBox));
 		*wall_collision_box_p = (CollisionBox){1, bounding_box_wall};
-
 
 		CharacterModel *crate_character = malloc(sizeof(CharacterModel));
 		*crate_character = (CharacterModel){0};
@@ -75,9 +74,7 @@ void setup_crates(CrateSlice *crates_slice, Vector3 crates_positions[], unsigned
 		//printf("[INFO] Floor Pointer solo %p\n", floor_collision_box_p);
 		//printf("[INFO] Floor Pointer en Crates %p\n", crates.items[i].floor);
 		//printf("[INFO] Floor Pointer en Scene Floor %p\n", scene_floor_collisions.items[scene_floor_collisions.len-1]);
-
 	}
-
 }
 
 void draw_crates()
@@ -92,9 +89,9 @@ void draw_crates()
 				break;
 			case 1:
 				crates.items[i].character->anim_current_frame = crates.items[i].character->anim_current_frame + 1;
-				if(crates.items[i].character->anim_current_frame >=  crates.items[i].character->model_animations[crates.items[i].character->anim_index].frameCount-5)
+				if(crates.items[i].character->anim_current_frame >=  crates.items[i].character->model_animations[0].frameCount-5)
 				{
-					crates.items[i].character->anim_current_frame =  crates.items[i].character->model_animations[crates.items[i].character->anim_index].frameCount-6;
+					crates.items[i].character->anim_current_frame =  crates.items[i].character->model_animations[0].frameCount-6;
 					crates.items[i].state = 2;
 				}
 				else
@@ -108,4 +105,20 @@ void draw_crates()
 				break;
 		}
 	}
+} 
+
+
+void destroy_crate(Crate *crate_to_destroy)
+{
+	crate_to_destroy->state = 1;
+	crate_to_destroy->floor->enable = 0;
+	crate_to_destroy->wall->enable = 0;
+}
+void restore_crate(Crate *crate_to_restore)
+{
+	UpdateModelAnimation(crate_to_restore->character->model, crate_to_restore->character->model_animations[1], 0 );
+	crate_to_restore->character->anim_current_frame = 0;
+	crate_to_restore->state = 0;
+	crate_to_restore->floor->enable = 1;
+	crate_to_restore->wall->enable = 1;
 }

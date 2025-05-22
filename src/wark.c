@@ -12,6 +12,7 @@ Vector3 camera_positions[2] = {
     { 0.33, 2.94, -9.72 },
     { -1.99, 7.84, 6.19 },
 };
+
 Vector3 CratesPositions[16] = {
     { -2.00, 0.50, 11.00 },
     { -2.00, 2.50, 11.00 },
@@ -32,8 +33,6 @@ Vector3 CratesPositions[16] = {
 };
 
 unsigned char index_camera_positions = 0;
-
-
 
 Model model_scene_wall_collisions = {0};
 CollisionBoxSlice scene_wall_collisions = {0};
@@ -99,6 +98,9 @@ void load_assets()
 void setup()
 {
 	
+	SetTraceLogLevel(LOG_NONE);
+
+
 	setup_raywindow();
 	srand((unsigned long)time(NULL));
 
@@ -120,11 +122,10 @@ void reset()
 {
 
 	reset_player();
-	
+	for(size_t i = 0; i < crates.len; i++)
+		restore_crate(&crates.items[i]);
 
 }
-
-int index_box_delete = 0;
 
 int process()
 {
@@ -133,14 +134,7 @@ int process()
 	process_player(dt);
 	
 	if(IsKeyPressed(KEY_UP)) {index_camera_positions = (index_camera_positions+1)%2; CAMERA.position = camera_positions[index_camera_positions];}
-	if(IsKeyPressed(KEY_DOWN))
-	{
-		crates.items[index_box_delete].state = 1;
-		crates.items[index_box_delete].floor->enable = 0;
-		crates.items[index_box_delete].wall->enable = 0;
-		index_box_delete =  index_box_delete + 1 >= crates.len ? 0 : index_box_delete + 1; 
-
-	}
+	
 
 	CAMERA.target = PLAYER.position;
 	UpdateCamera(&CAMERA, CAMERA_PERSPECTIVE);
@@ -170,8 +164,8 @@ void draw()
                 // PLAYER
                 draw_player();
 
-                for(int i = 0; i < 8; i++)DrawRay((Ray){(Vector3){PLAYER.position.x + ray_floor_collision_offsets[i].x, PLAYER.position.y + 1, PLAYER.position.z + ray_floor_collision_offsets[i].y },DOWN_AXIS}, GREEN);
-				DrawSphere((Vector3){PLAYER.position.x, PLAYER.position.y + .45, PLAYER.position.z}, .2f  , RED );     
+                //for(int i = 0; i < 8; i++)DrawRay((Ray){(Vector3){PLAYER.position.x + ray_floor_collision_offsets[i].x, PLAYER.position.y + 1, PLAYER.position.z + ray_floor_collision_offsets[i].y },DOWN_AXIS}, GREEN);
+				//DrawSphere((Vector3){PLAYER.position.x, PLAYER.position.y + .45, PLAYER.position.z}, .2f  , RED );     
 
 				       
                 

@@ -192,6 +192,20 @@ int int_sign(int x){if (x>0) return +1; else if (x < 0) return -1; else return 0
 int int_move_toward(int in, int to, float delta){ if (abs(to - in) <= delta) return to; else return in + int_sign(to - in) * delta;}
 
 
+int get_bone_index(ModelAnimation *model_anim, const char* bone_name)
+{
+	for (int i = 0; i < model_anim->boneCount; i++)
+    {
+        if (strcmp(model_anim->bones[i].name, bone_name) == 0)
+        {
+
+        	return i;
+        }
+    }
+
+	return -99;
+}
+
 
 
 void load_model_animations(CharacterModel *character, const char *file_path, const char *text_debug)
