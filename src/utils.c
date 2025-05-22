@@ -8,6 +8,7 @@
 #include <raylib.h>
 #include <raymath.h>
 #include "string.h"
+#include "rlgl.h"
 
 #define UP_AXIS (Vector3){0,1,0}
 #define DOWN_AXIS (Vector3){0,-1,0}
